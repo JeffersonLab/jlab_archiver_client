@@ -49,7 +49,10 @@ development dependencies.  Then develop using your preferred IDE, etc.
 git clone https://github.com/JeffersonLab/jlab_archiver_client
 cd jlab_archiver_client
 python3.11 -m venv venv
+# bash
 venv/bin/activate
+# tcsh / csh
+venv/bin/activate.csh
 pip install -e .[dev]
 ```
 

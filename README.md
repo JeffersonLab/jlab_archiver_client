@@ -44,20 +44,28 @@ pip install jlab_archiver_client
 Download the repo, create a virtual environment using pythong 3.11+, and install the package in editable mode with 
 development dependencies.  Then develop using your preferred IDE, etc.
 
-*Linux*
+*Linux (bash)*
 ```bash
 git clone https://github.com/JeffersonLab/jlab_archiver_client
 cd jlab_archiver_client
 python3.11 -m venv venv
 # bash
 source venv/bin/activate
+pip install -e .[dev]
+```
+
+*Linux (tcsh / csh)*
+```csh
+git clone https://github.com/JeffersonLab/jlab_archiver_client
+cd jlab_archiver_client
+python3.11 -m venv venv
 # tcsh / csh
 source venv/bin/activate.csh
 pip install -e .[dev]
 ```
 
-*Windows*
-```bash
+*Windows (PowerShell)*
+```PowerShell
 git clone https://github.com/JeffersonLab/jlab_archiver_client
 cd jlab_archiver_client
 \path\to\python3 -m venv venv

@@ -140,8 +140,7 @@ class Interval:
         opts = self.query.to_web_params()
         r = requests.get(self.url, params=opts)
 
-        if r.status_code != requests.codes.OK:
-            raise requests.RequestException(f"Error contacting server. status={r.status_code} details={r.text}")
+        utils.check_response(r)
 
         content = r.json()
         values = []

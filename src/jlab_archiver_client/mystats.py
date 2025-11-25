@@ -110,6 +110,7 @@ from typing import Optional, Dict, Any
 import pandas as pd
 import requests
 
+from jlab_archiver_client import utils
 from jlab_archiver_client.query import MyStatsQuery
 from jlab_archiver_client.config import config
 
@@ -175,9 +176,7 @@ class MyStats:
         opts = self.query.to_web_params()
         r = requests.get(self.url, params=opts)
 
-        # Check if we have any errors
-        if r.status_code != requests.codes.OK:
-            raise requests.RequestException(f"Error contacting server. status={r.status_code} details={r.text}")
+        utils.check_response(r)
 
         # Single top level key is channels
         channels = r.json()['channels']

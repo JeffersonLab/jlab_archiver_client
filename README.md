@@ -50,9 +50,9 @@ git clone https://github.com/JeffersonLab/jlab_archiver_client
 cd jlab_archiver_client
 python3.11 -m venv venv
 # bash
-venv/bin/activate
+source venv/bin/activate
 # tcsh / csh
-venv/bin/activate.csh
+source venv/bin/activate.csh
 pip install -e .[dev]
 ```
 
@@ -132,9 +132,7 @@ query = MySamplerQuery(
     start=datetime.strptime("2019-08-12 00:00:00", "%Y-%m-%d %H:%M:%S"),
     interval=1_800_000,  # 30 minutes in milliseconds
     num_samples=15,
-    pvlist=["channel1", "channel2"],
-    enums_as_strings=True,
-    deployment="docker"
+    pvlist=["R12XGMES", "R13XGMES"],
 )
 
 mysampler = MySampler(query)
@@ -142,23 +140,29 @@ mysampler.run()
 
 # Access the data as a DataFrame with datetime index
 print(mysampler.data)
-#                      channel1      channel2
-# Date
-# 2019-08-12 00:00:00       NaN          None
-# 2019-08-12 00:30:00   95.9706          None
-# 2019-08-12 01:00:00   95.3033  CW MODE (DC)
-# ...
+                     R12XGMES  R13XGMES
+Date                                   
+2019-08-12 00:00:00    57.265    44.813
+2019-08-12 00:30:00    57.265    44.811
+2019-08-12 01:00:00    57.265    44.811
+2019-08-12 01:30:00    57.265    44.811
+...
 
-# Access disconnect events
+# Access disconnect events - dictionary of chanel_names: pd.Series
 print(mysampler.disconnects)
+{}
 
 # Access channel metadata
 print(mysampler.metadata)
+{'R12XGMES': {'metadata': {'name': 'R12XGMES', 'datatype': 'DBR_DOUBLE', 'datasize': 1, 'datahost': 'hstmya3', 'ioc': None, 'active': True}, 'returnCount': 15}, 'R13XGMES': {'metadata': {'name': 'R13XGMES', 'datatype': 'DBR_DOUBLE', 'datasize': 1, 'datahost': 'hstmya0', 'ioc': None, 'active': True}, 'returnCount': 15}}
+
 ```
 
 ### Interval - All Events in Time Range
 
 Retrieve all archived events for a single PV. Best for detailed event history.  Also includes option to run multiple interval queries in parallel and return combined results.  This results in a single DataFrame with a row for each timestamp that any *single* channel updated.
+
+**Note:** Example assumes you are running the provided docker container.
 
 ```python
 from jlab_archiver_client import Interval, IntervalQuery
@@ -199,7 +203,9 @@ data, disconnects, metadata = Interval.run_parallel(
 
 Compute statistics (min, max, mean, etc.) over time bins. Efficient for analyzing trends.
 
-Note: Statistical computations are performed on the myquery server which saves on outbound traffic, but still requires all data be streamed to the myquery server.
+**Note:** Statistical computations are performed on the myquery server which saves on outbound traffic, but still requires all data be streamed to the myquery server.
+
+**Note:** Example assumes you are running the provided docker container.
 
 ```python
 from jlab_archiver_client import MyStats, MyStatsQuery
@@ -244,6 +250,8 @@ print(mystats.data.loc[idx['2019-08-12 00:00:00':'2019-08-12 12:00:00', ['mean',
 
 Retrieve a single event at or near a specific timestamp.
 
+**Note:** Example assumes you are running the provided docker container.
+
 ```python
 from jlab_archiver_client import Point, PointQuery
 from datetime import datetime
@@ -267,6 +275,8 @@ print(point.event)
 ### Channel - Search for Channels
 
 Discover available channels and their metadata using SQL-style pattern matching.
+
+**Note:** Example assumes you are running the provided docker container.
 
 ```python
 from jlab_archiver_client import Channel, ChannelQuery

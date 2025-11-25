@@ -150,7 +150,7 @@ def check_response(r: requests.Response) -> None:
     Raises:
         RequestException when a problem making the query has occurred
     """
-    if r.status_code >= 400:
+    if r.status_code >= requests.codes.BAD_REQUEST:
         if 'application/json' in r.headers['Content-Type'] :
             msg = r.text
         else:

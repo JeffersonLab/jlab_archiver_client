@@ -364,7 +364,7 @@ class TestMySamplerMain(unittest.TestCase):
     @patch('jlab_archiver_client.scripts.MySampler')
     @patch('sys.argv')
     def test_mysampler_main_with_n_queries_strategy(self, mock_argv, mock_mysampler_class):
-        """Test mysampler_main with sample_strategy='n_queries'."""
+        """Test mysampler_main with sample_strategy='n_queries'.  Check resulting query parameters"""
         mock_argv.__getitem__ = lambda s, i: [
             'jac-mysampler',
             '-c', 'channel1', 'channel2',
@@ -373,13 +373,6 @@ class TestMySamplerMain(unittest.TestCase):
             '-n', '100',
             '--sample-strategy', 'n_queries'
         ][i]
-
-        # Mock the MySampler instance
-        mock_mysampler = MagicMock()
-        mock_mysampler.data.to_dict.return_value = {}
-        mock_mysampler.disconnects = {}
-        mock_mysampler.metadata = {}
-        mock_mysampler_class.return_value = mock_mysampler
 
         with patch('sys.stdout', new_callable=StringIO):
             mysampler_main()
@@ -393,7 +386,7 @@ class TestMySamplerMain(unittest.TestCase):
     @patch('jlab_archiver_client.scripts.MySampler')
     @patch('sys.argv')
     def test_mysampler_main_with_stream_strategy(self, mock_argv, mock_mysampler_class):
-        """Test mysampler_main with sample_strategy='stream'."""
+        """Test mysampler_main with sample_strategy='stream'.  Check resulting query parameters"""
         mock_argv.__getitem__ = lambda s, i: [
             'jac-mysampler',
             '-c', 'channel1', 'channel2',
@@ -402,13 +395,6 @@ class TestMySamplerMain(unittest.TestCase):
             '-n', '100',
             '-x', 'stream'
         ][i]
-
-        # Mock the MySampler instance
-        mock_mysampler = MagicMock()
-        mock_mysampler.data.to_dict.return_value = {}
-        mock_mysampler.disconnects = {}
-        mock_mysampler.metadata = {}
-        mock_mysampler_class.return_value = mock_mysampler
 
         with patch('sys.stdout', new_callable=StringIO):
             mysampler_main()
@@ -422,21 +408,14 @@ class TestMySamplerMain(unittest.TestCase):
     @patch('jlab_archiver_client.scripts.MySampler')
     @patch('sys.argv')
     def test_mysampler_main_without_sample_strategy(self, mock_argv, mock_mysampler_class):
-        """Test mysampler_main without sample_strategy (should default to None)."""
+        """Test mysampler_main without sample_strategy (should default to None in query)."""
         mock_argv.__getitem__ = lambda s, i: [
             'jac-mysampler',
-            '-c', 'channel1', 'channel2',
+            '-c', 'channel1', 'channel20',
             '-b', '2023-05-09 12:00:00',
             '-i', '1000',
             '-n', '100'
         ][i]
-
-        # Mock the MySampler instance
-        mock_mysampler = MagicMock()
-        mock_mysampler.data.to_dict.return_value = {}
-        mock_mysampler.disconnects = {}
-        mock_mysampler.metadata = {}
-        mock_mysampler_class.return_value = mock_mysampler
 
         with patch('sys.stdout', new_callable=StringIO):
             mysampler_main()

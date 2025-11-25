@@ -164,7 +164,8 @@ class MySamplerQuery(Query):
 
     # noinspection PyMissingConstructor
     def __init__(self, start: datetime, interval: int, num_samples: int, pvlist: List[str],
-                 deployment: Optional[str] = "history", data_updates_only: bool=False, enums_as_strings: bool=False,
+                 deployment: Optional[str] = "history", sample_strategy: Optional[str] = None,
+                 data_updates_only: bool=False, enums_as_strings: bool=False,
                  unix_timestamps_ms: bool=False, adjust_time_to_server_offset: bool=False, **kwargs):
         """Construct an instance of MySamplerQuery.
 
@@ -174,6 +175,14 @@ class MySamplerQuery(Query):
             num_samples: The number of samples to take
             pvlist: The list of PVs to collect on
             deployment: The mya deployment to use.  (Default:"history", unlike the myquery endpoint).
+            sample_strategy: The sampling strategy to use.  Options are None (default), 'n_queries', 'stream'.  If None,
+                             then default sampling strategy is determined by the myquery server. 'n_queries' queries the
+                             database once for each data point returned.  'stream' queries the database once per PV and
+                             constructs the returned data from the stream.  'n_queries' is generally more efficient for
+                             queries with a large number of update events per sample while 'stream' is generally more
+                             efficient for queries with a small number of update events per sample.  Developer testing
+                             indicates the threshold for switching strategies to maintain the best response time is
+                             somewhere around 5,000 update events per sample.
             data_updates_only: Should the response ignore events such as "NETWORK_DISCONNECT" and assume the previous
                                 value is still in effect  (Default: False)
             enums_as_strings: Should enum PV values be returned as their names instead of ints
@@ -187,11 +196,17 @@ class MySamplerQuery(Query):
         self.num_samples = num_samples
         self.pvlist = pvlist
         self.deployment = deployment
+        self.sample_strategy = sample_strategy
         self.data_updates_only = data_updates_only
         self.enums_as_strings = enums_as_strings
         self.unix_timestamps_ms = unix_timestamps_ms
         self.adjust_time_to_server_offset = adjust_time_to_server_offset
         self.extra_opts = kwargs
+
+        if self.sample_strategy is not None:
+            self.sample_strategy = self.sample_strategy.lower()
+            if self.sample_strategy not in ("n_queries", "stream"):
+                raise ValueError("sample_strategy must be None, 'n_queries', or 'stream'")
 
     def to_web_params(self) -> Dict[str, str]:
         """Convert the objects command line parameters to their web counterparts"""
@@ -201,6 +216,12 @@ class MySamplerQuery(Query):
                'm': self.deployment,
                's': self.interval,
                }
+
+        if self.sample_strategy is not None:
+            if self.sample_strategy == "n_queries":
+                out['x'] = "n"
+            elif self.sample_strategy == "stream":
+                out['x'] = "s"
 
         # API takes presence of some params to mean == true, and the web form uses 'on' instead of a boolean.
         if self.data_updates_only:

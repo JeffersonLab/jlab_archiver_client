@@ -361,6 +361,71 @@ class TestMySamplerMain(unittest.TestCase):
         self.assertTrue(query.unix_timestamps_ms)
         self.assertTrue(query.adjust_time_to_server_offset)
 
+    @patch('jlab_archiver_client.scripts.MySampler')
+    @patch('sys.argv')
+    def test_mysampler_main_with_n_queries_strategy(self, mock_argv, mock_mysampler_class):
+        """Test mysampler_main with sample_strategy='n_queries'.  Check resulting query parameters"""
+        mock_argv.__getitem__ = lambda s, i: [
+            'jac-mysampler',
+            '-c', 'channel1', 'channel2',
+            '-b', '2023-05-09 12:00:00',
+            '-i', '1000',
+            '-n', '100',
+            '--sample-strategy', 'n_queries'
+        ][i]
+
+        with patch('sys.stdout', new_callable=StringIO):
+            mysampler_main()
+
+        # Verify query parameters
+        call_args = mock_mysampler_class.call_args
+        query = call_args[0][0]
+
+        self.assertEqual(query.sample_strategy, 'n_queries')
+
+    @patch('jlab_archiver_client.scripts.MySampler')
+    @patch('sys.argv')
+    def test_mysampler_main_with_stream_strategy(self, mock_argv, mock_mysampler_class):
+        """Test mysampler_main with sample_strategy='stream'.  Check resulting query parameters"""
+        mock_argv.__getitem__ = lambda s, i: [
+            'jac-mysampler',
+            '-c', 'channel1', 'channel2',
+            '-b', '2023-05-09 12:00:00',
+            '-i', '1000',
+            '-n', '100',
+            '-x', 'stream'
+        ][i]
+
+        with patch('sys.stdout', new_callable=StringIO):
+            mysampler_main()
+
+        # Verify query parameters
+        call_args = mock_mysampler_class.call_args
+        query = call_args[0][0]
+
+        self.assertEqual(query.sample_strategy, 'stream')
+
+    @patch('jlab_archiver_client.scripts.MySampler')
+    @patch('sys.argv')
+    def test_mysampler_main_without_sample_strategy(self, mock_argv, mock_mysampler_class):
+        """Test mysampler_main without sample_strategy (should default to None in query)."""
+        mock_argv.__getitem__ = lambda s, i: [
+            'jac-mysampler',
+            '-c', 'channel1', 'channel20',
+            '-b', '2023-05-09 12:00:00',
+            '-i', '1000',
+            '-n', '100'
+        ][i]
+
+        with patch('sys.stdout', new_callable=StringIO):
+            mysampler_main()
+
+        # Verify query parameters
+        call_args = mock_mysampler_class.call_args
+        query = call_args[0][0]
+
+        self.assertIsNone(query.sample_strategy)
+
 
 class TestMyStatsMain(unittest.TestCase):
     """Test cases for mystats_main function."""

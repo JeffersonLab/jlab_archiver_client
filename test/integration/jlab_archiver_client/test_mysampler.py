@@ -200,3 +200,62 @@ class TestMySampler(unittest.TestCase):
                                res_metadata)
         self.assertEqual(res_data.channel2.dtype, object)
         self.assertEqual(res_data.channel3.dtype, object)
+
+    def test_get_mysampler_with_n_queries_strategy(self):
+        """Test query with sample_strategy='n_queries'.  Should match test_mysampler_1."""
+
+        query = MySamplerQuery(start=datetime.strptime("2018-04-24 12:00:00", "%Y-%m-%d %H:%M:%S"),
+                                       interval=600_000,  # 10 minutes
+                                       num_samples=10,
+                                       pvlist=["channel100", "channel101"],
+                                       deployment="docker",
+                                       sample_strategy="n_queries")
+
+        mysampler = MySampler(query)
+        mysampler.run()
+        res_data = mysampler.data
+        res_disconnects = mysampler.disconnects
+        res_metadata = mysampler.metadata
+
+        # Should get same results as test_get_mysampler_1 (which uses default strategy)
+        exp_data, exp_disconnects, exp_metadata = self.load_mysampler_data("mysampler_1")
+        self.check_mysampler_result(exp_data, exp_disconnects, exp_metadata, res_data, res_disconnects,
+                                    res_metadata)
+        self.assertEqual(res_data.channel100.dtype, float)
+        self.assertEqual(res_data.channel101.dtype, float)
+
+    def test_get_mysampler_with_stream_strategy(self):
+        """Test query with sample_strategy='stream'.  Should match test_mysampler_1."""
+
+        query = MySamplerQuery(start=datetime.strptime("2018-04-24 12:00:00", "%Y-%m-%d %H:%M:%S"),
+                                       interval=600_000,  # 10 minutes
+                                       num_samples=10,
+                                       pvlist=["channel100", "channel101"],
+                                       deployment="docker",
+                                       sample_strategy="stream")
+
+        mysampler = MySampler(query)
+        mysampler.run()
+        res_data = mysampler.data
+        res_disconnects = mysampler.disconnects
+        res_metadata = mysampler.metadata
+
+        # Should get same results as test_get_mysampler_1 (which uses default strategy)
+        exp_data, exp_disconnects, exp_metadata = self.load_mysampler_data("mysampler_1")
+        self.check_mysampler_result(exp_data, exp_disconnects, exp_metadata, res_data, res_disconnects,
+                                    res_metadata)
+        self.assertEqual(res_data.channel100.dtype, float)
+        self.assertEqual(res_data.channel101.dtype, float)
+
+    def test_get_mysampler_invalid_strategy(self):
+        """Test that invalid sample_strategy raises ValueError."""
+
+        with self.assertRaises(ValueError) as context:
+            MySamplerQuery(start=datetime.strptime("2018-04-24 12:00:00", "%Y-%m-%d %H:%M:%S"),
+                                   interval=600_000,
+                                   num_samples=10,
+                                   pvlist=["channel100", "channel101"],
+                                   deployment="docker",
+                                   sample_strategy="invalid_strategy")
+
+        self.assertIn("sample_strategy must be None, 'n_queries', or 'stream'", str(context.exception))

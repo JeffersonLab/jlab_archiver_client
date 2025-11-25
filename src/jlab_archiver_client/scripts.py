@@ -241,6 +241,10 @@ def mysampler_main():
     # Optional query parameters
     parser.add_argument('-m', '--deployment', type=str, default='history',
                         help='MYA deployment (default: history)')
+    parser.add_argument('-x', '--sample-strategy', type=str, default=None,
+                        choices=['n_queries', 'stream'],
+                        help='Sampling strategy: n_queries (efficient for many updates per sample) or '
+                             'stream (efficient for few updates per sample). None uses myquery default.')
 
     # Boolean flags
     parser.add_argument('-d', '--data-updates-only', action='store_true',
@@ -277,6 +281,7 @@ def mysampler_main():
         num_samples=args.num_samples,
         pvlist=args.channels,
         deployment=args.deployment,
+        sample_strategy=args.sample_strategy,
         data_updates_only=args.data_updates_only,
         enums_as_strings=args.enums_as_strings,
         unix_timestamps_ms=args.unix_timestamps_ms,

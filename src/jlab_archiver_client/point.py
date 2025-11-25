@@ -46,6 +46,7 @@ from typing import Optional, Dict, Any
 
 import requests
 
+from jlab_archiver_client import utils
 from jlab_archiver_client.config import config
 from jlab_archiver_client.query import PointQuery
 
@@ -87,8 +88,7 @@ class Point:
         opts = self.query.to_web_params()
         r = requests.get(self.url, params=opts)
 
-        if r.status_code != requests.codes.OK:
-            raise requests.RequestException(f"Error contacting server. status={r.status_code} details={r.text}")
+        utils.check_response(r)
 
         self.event = r.json()
         self.event['name'] = self.query.channel

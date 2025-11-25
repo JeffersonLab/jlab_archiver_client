@@ -129,8 +129,7 @@ class MySampler:
         r = requests.get(self.url, params=opts)
 
         # Check if we have any errors
-        if r.status_code != requests.codes.OK:
-            raise requests.RequestException(f"Error contacting server. status={r.status_code} details={r.text}")
+        utils.check_response(r)
 
         # Single top level key is channels
         channels = r.json()['channels']

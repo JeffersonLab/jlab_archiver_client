@@ -31,6 +31,7 @@ from typing import Optional, List, Any, Dict
 
 import requests
 
+from jlab_archiver_client import utils
 from jlab_archiver_client.config import config
 from jlab_archiver_client.query import ChannelQuery
 
@@ -64,9 +65,5 @@ class Channel:
         opts = self.query.to_web_params()
         r = requests.get(self.url, params=opts)
 
-        if r.status_code != requests.codes.OK:
-            raise requests.RequestException(f"Error contacting server. status={r.status_code} details={r.text}")
-
-        content = r.json()
-
-        self.matches = content
+        utils.check_response(r)
+        self.matches = r.json()

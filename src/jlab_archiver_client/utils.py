@@ -3,6 +3,7 @@ from typing import Any, Dict, List
 
 import numpy as np
 import pandas as pd
+import requests
 
 
 def convert_data_to_series(values: List[Any], ts: List[Any], name: str, metadata: Dict[str, Any],
@@ -139,3 +140,19 @@ def json_normalize(obj: Any) -> Any:
         obj = [json_normalize(v) for v in obj]
 
     return obj
+
+def check_response(r: requests.Response) -> None:
+    """Check the response from a requests call for errors.
+
+    Args:
+        r: The response object from a requests call.
+
+    Raises:
+        RequestException when a problem making the query has occurred
+    """
+    if r.status_code >= requests.codes.BAD_REQUEST:
+        if 'application/json' in r.headers['Content-Type'] :
+            msg = r.text
+        else:
+            msg = r.reason
+        raise requests.RequestException(f"Error contacting server. status={r.status_code} details={msg}")

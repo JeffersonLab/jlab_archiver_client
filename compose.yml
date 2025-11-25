@@ -2,7 +2,7 @@ services:
   mya:
     image: jeffersonlab/mycontainer:2.0.0
     hostname: mya
-    container_name: mya
+#    container_name: mya
     ports:
       - "3306:3306"
     volumes:
@@ -19,7 +19,7 @@ services:
   myquery:
     image: jeffersonlab/myquery:6.2.0
     hostname: myquery
-    container_name: myquery
+#    container_name: myquery
     ports:
       - "8080:8080"
     volumes:

@@ -61,7 +61,7 @@ cd jlab_archiver_client
 python3.11 -m venv venv
 # tcsh / csh
 source venv/bin/activate.csh
-pip install -e .[dev]
+pip install -e '.[dev]'
 ```
 
 *Windows (PowerShell)*

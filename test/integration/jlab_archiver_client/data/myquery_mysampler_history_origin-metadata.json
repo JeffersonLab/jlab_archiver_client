@@ -1,4 +1,15 @@
 {
+  "channel1": {
+    "metadata": {
+      "name": "channel1",
+      "datatype": "DBR_DOUBLE",
+      "datasize": 1,
+      "datahost": "mya",
+      "ioc": null,
+      "active": true
+    },
+    "returnCount": 15
+  },
   "channel2": {
     "metadata": {
       "name": "channel2",
@@ -20,17 +31,6 @@
         ]
       }
     ],
-    "returnCount": 15
-  },
-  "channel3": {
-    "metadata": {
-      "name": "channel3",
-      "datatype": "DBR_DOUBLE",
-      "datasize": 168,
-      "datahost": "mya",
-      "ioc": null,
-      "active": true
-    },
     "returnCount": 15
   }
 }

@@ -1,1 +1,13 @@
-{"channel2": {"__type__": "series", "2019-08-12T00:00:00": "UNDEFINED", "2019-08-12T00:30:00": "UNDEFINED"}, "channel3": {"__type__": "series", "2019-08-12T00:00:00": "UNDEFINED", "2019-08-12T00:30:00": "CHANNELS_PRIOR_DATA_DISCARDED", "2019-08-12T01:00:00": "CHANNELS_PRIOR_DATA_DISCARDED"}}
+{
+  "channel2": {
+    "__type__": "series",
+    "2019-08-12T00:00:00": "UNDEFINED",
+    "2019-08-12T00:30:00": "UNDEFINED"
+  },
+  "channel3": {
+    "__type__": "series",
+    "2019-08-12T00:00:00": "UNDEFINED",
+    "2019-08-12T00:30:00": "CHANNELS_PRIOR_DATA_DISCARDED",
+    "2019-08-12T01:00:00": "CHANNELS_PRIOR_DATA_DISCARDED"
+  }
+}

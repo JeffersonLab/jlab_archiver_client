@@ -223,6 +223,7 @@ class TestInterval(unittest.TestCase):
 
         # We can directly save the data as usual, but pandas saves each row as a string.  Need a little help getting it
         # back.
+        self.save_interval_data("interval_3", res_data, res_disconnects, res_metadata)
         exp_data, exp_disconnects, exp_metadata = self.load_interval_data("interval_3", pv=pv)
         exp_data = exp_data.apply(lambda x: np.fromstring(x.strip("[]"), sep=" "))
         self.check_interval_result(exp_data, exp_disconnects, exp_metadata, res_data, res_disconnects, res_metadata)

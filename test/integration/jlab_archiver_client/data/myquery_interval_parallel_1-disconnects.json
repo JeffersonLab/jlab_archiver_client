@@ -5,6 +5,7 @@
   },
   "channel100": {
     "__type__": "series",
+    "2018-04-24 06:25:01": "ORIGIN_OF_CHANNELS_HISTORY",
     "2018-04-24 12:19:44": "NETWORK_DISCONNECTION"
   }
 }

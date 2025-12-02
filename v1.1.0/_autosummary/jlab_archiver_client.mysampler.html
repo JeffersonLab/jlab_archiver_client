@@ -1,0 +1,210 @@
+# docsrc/source/_templates/layout.html
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>jlab_archiver_client.mysampler &mdash; jlab_archiver_client 1.1.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=fc837d61"></script>
+      <script src="../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="&lt;no title&gt;" href="jlab_archiver_client.mysampler.MySampler.html" />
+    <link rel="prev" title="&lt;no title&gt;" href="jlab_archiver_client.interval.Interval.html" />
+<!--suppress ALL -->
+<link href="../_static/rtd_custom.css" rel="stylesheet" type="text/css">
+
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            jlab_archiver_client
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="jlab_archiver_client.html">jlab_archiver_client</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="jlab_archiver_client.channel.html">jlab_archiver_client.channel</a></li>
+<li class="toctree-l2"><a class="reference internal" href="jlab_archiver_client.config.html">jlab_archiver_client.config</a></li>
+<li class="toctree-l2"><a class="reference internal" href="jlab_archiver_client.exceptions.html">jlab_archiver_client.exceptions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="jlab_archiver_client.interval.html">jlab_archiver_client.interval</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">jlab_archiver_client.mysampler</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="jlab_archiver_client.mysampler.MySampler.html"><code class="docutils literal notranslate"><span class="pre">MySampler</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="jlab_archiver_client.mystats.html">jlab_archiver_client.mystats</a></li>
+<li class="toctree-l2"><a class="reference internal" href="jlab_archiver_client.point.html">jlab_archiver_client.point</a></li>
+<li class="toctree-l2"><a class="reference internal" href="jlab_archiver_client.query.html">jlab_archiver_client.query</a></li>
+<li class="toctree-l2"><a class="reference internal" href="jlab_archiver_client.scripts.html">jlab_archiver_client.scripts</a></li>
+<li class="toctree-l2"><a class="reference internal" href="jlab_archiver_client.utils.html">jlab_archiver_client.utils</a></li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">jlab_archiver_client</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="jlab_archiver_client.html">jlab_archiver_client</a></li>
+      <li class="breadcrumb-item active">jlab_archiver_client.mysampler</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/_autosummary/jlab_archiver_client.mysampler.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="module-jlab_archiver_client.mysampler">
+<span id="jlab-archiver-client-mysampler"></span><h1>jlab_archiver_client.mysampler<a class="headerlink" href="#module-jlab_archiver_client.mysampler" title="Link to this heading"></a></h1>
+<p>MySampler module for querying regularly sampled archiver data.</p>
+<p>This module provides functionality for querying the Jefferson Lab Archiver’s
+mysampler endpoint, which returns Process Variable (PV) values at regularly
+spaced time intervals. The module handles data retrieval, processing, and
+organization into pandas DataFrames for easy analysis.</p>
+<p>The mysampler endpoint is designed for scenarios where you need synchronized
+samples of multiple PVs at consistent time intervals, as opposed to retrieving
+all archived events.</p>
+<dl>
+<dt>Key Features:</dt><dd><ul class="simple">
+<li><p>Query multiple PVs with a single request</p></li>
+<li><p>Sampling strategies for different update rates (manual selection required)</p></li>
+<li><p>Automatic handling of disconnect events and non-update events</p></li>
+<li><p>Data organized in a single DataFrame with common time index</p></li>
+<li><p>Separate tracking of disconnect events with original metadata</p></li>
+<li><p>Configurable sampling intervals and time ranges</p></li>
+<li><p>Support for enum-to-string conversion</p></li>
+</ul>
+</dd>
+<dt>Classes:</dt><dd><p>MySampler: Main class for executing mysampler queries and storing results.</p>
+</dd>
+<dt>Typical Usage:</dt><dd><p>Here is an example querying two channels from the containerized myquery
+bundled in the git project.</p>
+<dl>
+<dt>Example::</dt><dd><div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">jlab_archiver_client.config</span><span class="w"> </span><span class="kn">import</span> <span class="n">config</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">config</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">myquery_server</span> <span class="o">=</span> <span class="s2">&quot;localhost:8080&quot;</span><span class="p">,</span> <span class="n">protocol</span> <span class="o">=</span> <span class="s2">&quot;http&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">jlab_archiver_client</span><span class="w"> </span><span class="kn">import</span> <span class="n">MySampler</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">jlab_archiver_client</span><span class="w"> </span><span class="kn">import</span> <span class="n">MySamplerQuery</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">query</span> <span class="o">=</span> <span class="n">MySamplerQuery</span><span class="p">(</span><span class="n">start</span><span class="o">=</span><span class="n">datetime</span><span class="o">.</span><span class="n">strptime</span><span class="p">(</span><span class="s2">&quot;2019-08-12 00:00:00&quot;</span><span class="p">,</span> <span class="s2">&quot;%Y-%m-</span><span class="si">%d</span><span class="s2"> %H:%M:%S&quot;</span><span class="p">),</span>
+<span class="gp">... </span>                       <span class="n">interval</span><span class="o">=</span><span class="mi">1_800_000</span><span class="p">,</span>  <span class="c1"># 30 minutes</span>
+<span class="gp">... </span>                       <span class="n">num_samples</span><span class="o">=</span><span class="mi">15</span><span class="p">,</span>
+<span class="gp">... </span>                       <span class="n">pvlist</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;channel1&quot;</span><span class="p">,</span> <span class="s2">&quot;channel2&quot;</span><span class="p">],</span>
+<span class="gp">... </span>                       <span class="n">enums_as_strings</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+<span class="gp">... </span>                       <span class="n">deployment</span><span class="o">=</span><span class="s2">&quot;docker&quot;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">mysampler</span> <span class="o">=</span> <span class="n">MySampler</span><span class="p">(</span><span class="n">query</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">mysampler</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">mysampler</span><span class="o">.</span><span class="n">data</span>
+<span class="go">                     channel1      channel2</span>
+<span class="go">Date</span>
+<span class="go">2019-08-12 00:00:00       NaN          None</span>
+<span class="go">2019-08-12 00:30:00   95.9706          None</span>
+<span class="go">2019-08-12 01:00:00   95.3033  CW MODE (DC)</span>
+<span class="go">2019-08-12 01:30:00   94.3594  CW MODE (DC)</span>
+<span class="go">2019-08-12 02:00:00   94.8114  CW MODE (DC)</span>
+<span class="go">        &gt;&gt;&gt; mysampler.disconnects</span>
+<span class="go">{&#39;channel1&#39;: 2019-08-12T00:00:00    UNDEFINED</span>
+<span class="go">Name: channel1, dtype: object, &#39;channel2&#39;: 2019-08-12T00:00:00    UNDEFINED</span>
+<span class="go">2019-08-12T00:30:00    UNDEFINED</span>
+<span class="go">Name: channel2, dtype: object}</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">mysampler</span><span class="o">.</span><span class="n">metadata</span>
+<span class="go">{&#39;channel1&#39;: {&#39;metadata&#39;: {&#39;name&#39;: &#39;channel1&#39;, &#39;datatype&#39;: &#39;DBR_DOUBLE&#39;, &#39;datasize&#39;: 1, &#39;datahost&#39;: &#39;mya&#39;, &#39;ioc&#39;: None, &#39;active&#39;: True}, &#39;returnCount&#39;: 15}, &#39;channel2&#39;: {&#39;metadata&#39;: {&#39;name&#39;: &#39;channel2&#39;, &#39;datatype&#39;: &#39;DBR_ENUM&#39;, &#39;datasize&#39;: 1, &#39;datahost&#39;: &#39;mya&#39;, &#39;ioc&#39;: None, &#39;active&#39;: True}, &#39;labels&#39;: [{&#39;d&#39;: &#39;2016-08-12T13:00:49&#39;, &#39;value&#39;: [&#39;BEAM SYNC ONLY&#39;, &#39;PULSE MODE VL&#39;, &#39;TUNE MODE&#39;, &#39;CW MODE (DC)&#39;, &#39;USER MODE&#39;]}], &#39;returnCount&#39;: 15}}</span>
+</pre></div>
+</div>
+</dd>
+</dl>
+</dd>
+</dl>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Non-update events (disconnects, network errors, etc.) are stored as None
+in the main data DataFrame to allow pandas automatic type detection to
+work correctly. The original disconnect event information is preserved
+in a separate disconnects dictionary. The disconnects field contains both
+events where no data is available (e.g., NETWORK_DISCONNECTION) and special
+events that do have data (e.g., CHANNELS_PRIOR_DATA_DISCARDED). Channel
+metadata is also stored in a separate dictionary object.</p>
+</div>
+<div class="admonition seealso">
+<p class="admonition-title">See also</p>
+<p>jlab_archiver_client.query.MySamplerQuery: Query builder for mysampler requests
+jlab_archiver_client.config: Configuration settings for archiver endpoints</p>
+</div>
+<p class="rubric">Classes</p>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="jlab_archiver_client.mysampler.MySampler.html#jlab_archiver_client.mysampler.MySampler" title="jlab_archiver_client.mysampler.MySampler"><code class="xref py py-obj docutils literal notranslate"><span class="pre">MySampler</span></code></a>(query[, url])</p></td>
+<td><p>A class for running a myquery mysampler request and holding the results.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="jlab_archiver_client.interval.Interval.html" class="btn btn-neutral float-left" title="&lt;no title&gt;" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="jlab_archiver_client.mysampler.MySampler.html" class="btn btn-neutral float-right" title="&lt;no title&gt;" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright .</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

@@ -1,0 +1,27 @@
+# docsrc/source/_templates/custom-class-template.rst
+jlab\_archiver\_client.mystats.MyStats
+======================================
+
+.. currentmodule:: jlab_archiver_client.mystats
+
+.. autoclass:: MyStats
+   :members:
+   :show-inheritance:
+   :inherited-members:
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~MyStats.__init__
+      ~MyStats.run
+   
+   
+
+   
+   
+   

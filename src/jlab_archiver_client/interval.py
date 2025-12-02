@@ -143,19 +143,24 @@ class Interval:
         utils.check_response(r)
 
         content = r.json()
+        # Data values
         values = []
+        # Timestamps for all events
         ts = []
+        # Timestamps for disconnect events
         disconnect_ts = []
+        # Values for disconnect events (strings like "NETWORK_DISCONNECTION")
         disconnect_values = []
         for item in content['data']:
-            if 'x' in item:
+            ts.append(item['d'])
+            if 't' in item:
                 disconnect_values.append(item['t'])
                 disconnect_ts.append(item['d'])
-                ts.append(item['d'])
-                values.append(None)
-            else:
-                ts.append(item['d'])
+            if 'v' in item:
                 values.append(item['v'])
+            else:
+                # Should be identical to x=True in JSON response
+                values.append(None)
 
         # Default value for empty series is in flux.  Future will have dtype of object.  Skips a deprecation warning.
         if len(disconnect_values) == 0:

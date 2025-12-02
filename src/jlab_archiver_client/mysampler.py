@@ -143,8 +143,11 @@ class MySampler:
         for idx, channel in enumerate(channels.keys()):
             for key in channels[channel].keys():
                 if key == "data":
+                    # Values, timestamps kep in shared list 'Date'
                     v = []
+                    # Disconnect values (strings)
                     dv = []
+                    # Disconnect timestamps
                     dts = []
                     for sample in channels[channel]['data']:
                         # Grab only one datetime series
@@ -153,11 +156,13 @@ class MySampler:
 
                         # Handle disconnect events
                         if 't' in sample.keys():
-                            v.append(None)
                             dts.append(sample['d'])
                             dv.append(sample['t'])
-                        else:
+                        if 'v' in sample.keys():
                             v.append(sample['v'])
+                        else:
+                            # Should be identical to x=True in JSON response
+                            v.append(None)
                     samples[channel] = v
 
                     if len(dts) > 0:

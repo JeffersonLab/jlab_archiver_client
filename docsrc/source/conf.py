@@ -15,7 +15,7 @@ project = 'jlab_archiver_client'
 # noinspection PyShadowingBuiltins
 # copyright = '2025, Adam Carpenter'
 author = 'Adam Carpenter'
-release = '0.1.0'
+release = '1.1.0'
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration

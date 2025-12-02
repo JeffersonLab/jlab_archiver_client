@@ -7,7 +7,9 @@ pandas Series or DataFrames with datetime indices.
 
 The interval endpoint returns all archived events (value updates, disconnections, etc.) within
 the specified time range. Non-update events (like network disconnections) are handled separately
-to maintain data integrity and type consistency.
+to maintain data integrity and type consistency. The disconnects field contains both events where
+no data is available (e.g., NETWORK_DISCONNECTION) and special events that do have data
+(e.g., CHANNELS_PRIOR_DATA_DISCARDED).
 
 Examples:
     These examples are designed to work with the container environment in the development repo.
@@ -107,8 +109,10 @@ class Interval:
     Values of the PV updates are stored as a pandas Series object in the data
     field.  Non-update events are stored as None to allow better automatic type
     detection by pandas.  Diconnect events are stored as a pandas Series in the
-    disconnects field.  Other response metadata is available in the metadata
-    field.
+    disconnects field.  The disconnects field contains both events where no data
+    is available (e.g., NETWORK_DISCONNECTION) and special events that do have
+    data (e.g., CHANNELS_PRIOR_DATA_DISCARDED).  Other response metadata is
+    available in the metadata field.
 
     The interval endpoint is intended for retrieving the mya events over the
     requested time interval.
@@ -143,19 +147,24 @@ class Interval:
         utils.check_response(r)
 
         content = r.json()
+        # Data values
         values = []
+        # Timestamps for all events
         ts = []
+        # Timestamps for disconnect events
         disconnect_ts = []
+        # Values for disconnect events (strings like "NETWORK_DISCONNECTION")
         disconnect_values = []
         for item in content['data']:
-            if 'x' in item:
+            ts.append(item['d'])
+            if 't' in item:
                 disconnect_values.append(item['t'])
                 disconnect_ts.append(item['d'])
-                ts.append(item['d'])
-                values.append(None)
-            else:
-                ts.append(item['d'])
+            if 'v' in item:
                 values.append(item['v'])
+            else:
+                # Should be identical to x=True in JSON response
+                values.append(None)
 
         # Default value for empty series is in flux.  Future will have dtype of object.  Skips a deprecation warning.
         if len(disconnect_values) == 0:

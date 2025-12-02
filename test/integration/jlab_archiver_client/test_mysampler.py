@@ -192,6 +192,7 @@ class TestMySampler(unittest.TestCase):
         res_disconnects = mysampler.disconnects
         res_metadata = mysampler.metadata
 
+        # self.save_mysampler_data("mysampler_5", res_data, res_disconnects, res_metadata)
         exp_data, exp_disconnects, exp_metadata = self.load_mysampler_data("mysampler_5")
         exp_data = exp_data.apply(process_vector_series, axis=0)
         exp_data[exp_data.isnull()] = None
@@ -200,6 +201,32 @@ class TestMySampler(unittest.TestCase):
                                res_metadata)
         self.assertEqual(res_data.channel2.dtype, object)
         self.assertEqual(res_data.channel3.dtype, object)
+
+    def test_get_mysampler_history_origin(self):
+        """Test mysampler when the first sample is both a non-standard update event ("CHANNELS_PRIOR_DATA_DISCARDED")"""
+
+        query = MySamplerQuery(start=datetime.strptime("2019-08-12 00:00:01", "%Y-%m-%d %H:%M:%S"),
+                                       interval=1_800_000, # 30 minutes
+                                       num_samples=15,
+                                       pvlist=["channel1", "channel2"],
+                                       deployment="docker")
+
+        mysampler = MySampler(query)
+        mysampler.run()
+        res_data = mysampler.data
+        res_disconnects = mysampler.disconnects
+        res_metadata = mysampler.metadata
+
+        print(res_data)
+        print(res_disconnects)
+        print(res_metadata)
+
+        exp_data, exp_disconnects, exp_metadata = self.load_mysampler_data("mysampler_history_origin")
+        self.check_mysampler_result(exp_data, exp_disconnects, exp_metadata, res_data, res_disconnects,
+                               res_metadata)
+        self.assertEqual(res_data.channel1.dtype, float)
+        self.assertEqual(res_data.channel2.dtype, float)
+
 
     def test_get_mysampler_with_n_queries_strategy(self):
         """Test query with sample_strategy='n_queries'.  Should match test_mysampler_1."""

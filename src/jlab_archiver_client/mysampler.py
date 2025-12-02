@@ -60,8 +60,10 @@ Note:
     Non-update events (disconnects, network errors, etc.) are stored as None
     in the main data DataFrame to allow pandas automatic type detection to
     work correctly. The original disconnect event information is preserved
-    in a separate disconnects dictionary.  Channel metadata is also stored in
-    a separate dictionary object.
+    in a separate disconnects dictionary. The disconnects field contains both
+    events where no data is available (e.g., NETWORK_DISCONNECTION) and special
+    events that do have data (e.g., CHANNELS_PRIOR_DATA_DISCARDED). Channel
+    metadata is also stored in a separate dictionary object.
 
 See Also:
     jlab_archiver_client.query.MySamplerQuery: Query builder for mysampler requests
@@ -90,7 +92,10 @@ class MySampler:
 
     The diconnects field contains a dictionary that is keyed on each PV with
     values that are a Series of only the disconnect events.  The values of this
-    Series contain the original text associated with the non-update events.
+    Series contain the original text associated with the non-update events. The
+    disconnects field contains both events where no data is available (e.g.,
+    NETWORK_DISCONNECTION) and special events that do have data (e.g.,
+    CHANNELS_PRIOR_DATA_DISCARDED).
 
     Additional metadata from the myquery/mysampler response is contained in a
     dictionary under the metadata field.
@@ -143,8 +148,11 @@ class MySampler:
         for idx, channel in enumerate(channels.keys()):
             for key in channels[channel].keys():
                 if key == "data":
+                    # Values, timestamps kep in shared list 'Date'
                     v = []
+                    # Disconnect values (strings)
                     dv = []
+                    # Disconnect timestamps
                     dts = []
                     for sample in channels[channel]['data']:
                         # Grab only one datetime series
@@ -153,11 +161,13 @@ class MySampler:
 
                         # Handle disconnect events
                         if 't' in sample.keys():
-                            v.append(None)
                             dts.append(sample['d'])
                             dv.append(sample['t'])
-                        else:
+                        if 'v' in sample.keys():
                             v.append(sample['v'])
+                        else:
+                            # Should be identical to x=True in JSON response
+                            v.append(None)
                     samples[channel] = v
 
                     if len(dts) > 0:

@@ -1,0 +1,587 @@
+# docsrc/source/_templates/layout.html
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>jlab_archiver_client.query &mdash; jlab_archiver_client 1.1.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../_static/documentation_options.js?v=fc837d61"></script>
+      <script src="../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+<!--suppress ALL -->
+<link href="../../_static/rtd_custom.css" rel="stylesheet" type="text/css">
+
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            jlab_archiver_client
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../_autosummary/jlab_archiver_client.html">jlab_archiver_client</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">jlab_archiver_client</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">jlab_archiver_client.query</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for jlab_archiver_client.query</h1><div class="highlight"><pre>
+<span></span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Query builder classes for Jefferson Lab Archiver myquery endpoints.</span>
+
+<span class="sd">This module provides query builder classes for constructing requests to various</span>
+<span class="sd">Jefferson Lab Archiver myquery service endpoints. Each query class encapsulates</span>
+<span class="sd">the parameters needed for a specific endpoint and handles conversion to web</span>
+<span class="sd">request parameters.</span>
+
+<span class="sd">The query classes serve as parameter containers that are passed to their</span>
+<span class="sd">corresponding client classes (MySampler, MyStats, Interval, Point, Channel)</span>
+<span class="sd">which execute the queries and process the results.</span>
+
+<span class="sd">Key Features:</span>
+<span class="sd">    * Type-safe query parameter validation</span>
+<span class="sd">    * Automatic conversion to myquery web API format</span>
+<span class="sd">    * Support for all major myquery endpoints</span>
+<span class="sd">    * Extensible via kwargs for future API changes</span>
+<span class="sd">    * Consistent interface across different query types</span>
+
+<span class="sd">Classes:</span>
+<span class="sd">    Query: Abstract base class for all query types.</span>
+<span class="sd">    IntervalQuery: Query for retrieving all events in a time range from the interval end point.</span>
+<span class="sd">    MySamplerQuery: Query for regularly sampled data across multiple PVs from the mysampler endpoint.</span>
+<span class="sd">    MyStatsQuery: Query for statistical aggregations over time bins from the mystats endpoint.</span>
+<span class="sd">    ChannelQuery: Query for searching/discovering channel names from the channel endpoint.</span>
+<span class="sd">    PointQuery: Query for retrieving a single event at a specific time from the point endpoint.</span>
+
+<span class="sd">Note:</span>
+<span class="sd">    All query classes support additional parameters via \*\*kwargs to allow for</span>
+<span class="sd">    future API extensions. Using kwargs will generate a warning to prevent</span>
+<span class="sd">    accidental misuse.</span>
+
+<span class="sd">See Also:</span>
+<span class="sd">    * jlab_archiver_client.mysampler: MySampler client for MySamplerQuery</span>
+<span class="sd">    * jlab_archiver_client.mystats: MyStats client for MyStatsQuery</span>
+<span class="sd">    * jlab_archiver_client.interval: Interval client for IntervalQuery</span>
+<span class="sd">    * jlab_archiver_client.point: Point client for PointQuery</span>
+<span class="sd">    * jlab_archiver_client.channel: Channel client for ChannelQuery</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">warnings</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">datetime</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Dict</span>
+
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;Query&quot;</span><span class="p">,</span> <span class="s2">&quot;IntervalQuery&quot;</span><span class="p">,</span> <span class="s2">&quot;MySamplerQuery&quot;</span><span class="p">,</span> <span class="s2">&quot;ChannelQuery&quot;</span><span class="p">,</span> <span class="s2">&quot;PointQuery&quot;</span><span class="p">,</span> <span class="s2">&quot;MyStatsQuery&quot;</span><span class="p">]</span>
+
+
+<div class="viewcode-block" id="Query">
+<a class="viewcode-back" href="../../_autosummary/jlab_archiver_client.query.Query.html#jlab_archiver_client.query.Query">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">Query</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;An abstract base class to be used by various mya utility wrappers.&quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="Query.__init__">
+<a class="viewcode-back" href="../../_autosummary/jlab_archiver_client.query.Query.html#jlab_archiver_client.query.Query.__init__">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s2">&quot;Query class is abstract&quot;</span><span class="p">)</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">to_web_params</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s2">&quot;Query class is abstract&quot;</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="IntervalQuery">
+<a class="viewcode-back" href="../../_autosummary/jlab_archiver_client.query.IntervalQuery.html#jlab_archiver_client.query.IntervalQuery">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">IntervalQuery</span><span class="p">(</span><span class="n">Query</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;A class for holding the parameters of an interval myquery call&quot;&quot;&quot;</span>
+    <span class="c1"># noinspection PyMissingConstructor</span>
+<div class="viewcode-block" id="IntervalQuery.__init__">
+<a class="viewcode-back" href="../../_autosummary/jlab_archiver_client.query.IntervalQuery.html#jlab_archiver_client.query.IntervalQuery.__init__">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">channel</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">begin</span><span class="p">:</span> <span class="n">datetime</span><span class="p">,</span> <span class="n">end</span><span class="p">:</span> <span class="n">datetime</span><span class="p">,</span>
+                 <span class="n">bin_limit</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+                 <span class="n">sample_type</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+                 <span class="n">deployment</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;history&quot;</span><span class="p">,</span>
+                 <span class="n">frac_time_digits</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
+                 <span class="n">sig_figs</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">6</span><span class="p">,</span>
+                 <span class="n">data_updates_only</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+                 <span class="n">prior_point</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+                 <span class="n">enums_as_strings</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+                 <span class="n">unix_timestamps_ms</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+                 <span class="n">adjust_time_to_server_offset</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+                 <span class="n">integrate</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+                 <span class="o">**</span><span class="n">kwargs</span>
+                 <span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Construct a query to the myquery interval service.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            channel: A list of PV Names to query</span>
+<span class="sd">            begin: The start time of the query</span>
+<span class="sd">            end: The end time of the query</span>
+<span class="sd">            deployment: The mya deployment to query</span>
+<span class="sd">            bin_limit: How many points returned from MYA before sampling kicks in</span>
+<span class="sd">            sample_type: What sampling algorithm should be used.  [graphical, eventsimple, myget, mysampler]</span>
+<span class="sd">            frac_time_digits: How many digits should be displayed for fractional seconds</span>
+<span class="sd">            sig_figs: How many significant figures should be reported in the PV values</span>
+<span class="sd">            data_updates_only: Should the response include updates that only include value changes (not disconnects?)</span>
+<span class="sd">            prior_point: Should the query use the most recent update prior to the start to give a value at the start of</span>
+<span class="sd">                         the query.</span>
+<span class="sd">            enums_as_strings:  Should enum PV values be returned as their named strings instead of ints</span>
+<span class="sd">            unix_timestamps_ms:  Should timestamps be returned as millis since unix epoch</span>
+<span class="sd">            adjust_time_to_server_offset: Should the timestamp be localized to the myquery server</span>
+<span class="sd">            integrate: Should the values be integrated (ony supported for float PVs)</span>
+<span class="sd">            kwargs: Any extra parameters to be supplied to the interval web end point.  Will produce a warning if used</span>
+<span class="sd">                    to avoid accidental use.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">channel</span> <span class="o">=</span> <span class="n">channel</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">begin</span> <span class="o">=</span> <span class="n">begin</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">end</span> <span class="o">=</span> <span class="n">end</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">bin_limit</span> <span class="o">=</span> <span class="n">bin_limit</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">sample_type</span> <span class="o">=</span> <span class="n">sample_type</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">deployment</span> <span class="o">=</span> <span class="n">deployment</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">frac_time_digits</span> <span class="o">=</span> <span class="n">frac_time_digits</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">sig_figs</span> <span class="o">=</span> <span class="n">sig_figs</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">data_updates_only</span> <span class="o">=</span> <span class="n">data_updates_only</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">prior_point</span> <span class="o">=</span> <span class="n">prior_point</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">enums_as_strings</span> <span class="o">=</span> <span class="n">enums_as_strings</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">unix_timestamps_ms</span> <span class="o">=</span> <span class="n">unix_timestamps_ms</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">adjust_time_to_server_offset</span> <span class="o">=</span> <span class="n">adjust_time_to_server_offset</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">integrate</span> <span class="o">=</span> <span class="n">integrate</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">extra_opts</span> <span class="o">=</span> <span class="n">kwargs</span></div>
+
+
+<div class="viewcode-block" id="IntervalQuery.to_web_params">
+<a class="viewcode-back" href="../../_autosummary/jlab_archiver_client.query.IntervalQuery.html#jlab_archiver_client.query.IntervalQuery.to_web_params">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">to_web_params</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Convert the query to web parameters.</span>
+
+<span class="sd">        Based on myquery v6.2, but use of kwargs makes this more flexible.</span>
+
+<span class="sd">        Example URL that we&#39;re targeting</span>
+<span class="sd">        https://epicsweb.jlab.org/myquery/interval?c=R1M1GMES&amp;b=2023-05-09&amp;e=2023-05-09+15%3A59%3A00&amp;l=&amp;t=graphical&amp;m=history&amp;f=0&amp;v=6&amp;d=on&amp;p=on&amp;s=on&amp;u=on&amp;a=on&amp;i=on</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">ts_fmt</span> <span class="o">=</span> <span class="s2">&quot;%Y-%m-</span><span class="si">%d</span><span class="s2">T%H:%M:%S&quot;</span>
+        <span class="n">out</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;c&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">channel</span><span class="p">,</span>
+               <span class="s1">&#39;b&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">begin</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="n">ts_fmt</span><span class="p">),</span>
+               <span class="s1">&#39;e&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">end</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="n">ts_fmt</span><span class="p">),</span>
+               <span class="s1">&#39;m&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">deployment</span><span class="p">,</span>
+               <span class="s1">&#39;f&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">frac_time_digits</span><span class="p">,</span>
+               <span class="s1">&#39;v&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">sig_figs</span><span class="p">,</span>
+               <span class="p">}</span>
+
+        <span class="c1"># It looks like the form keeps the &#39;l&#39; param with &quot;&quot; passed if not specified</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">bin_limit</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">out</span><span class="p">[</span><span class="s1">&#39;l&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">out</span><span class="p">[</span><span class="s1">&#39;l&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">bin_limit</span>
+
+        <span class="c1"># myquery app assumes its own default if &#39;t&#39; is missing.  Don&#39;t need to send anything.</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">sample_type</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">out</span><span class="p">[</span><span class="s1">&#39;t&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sample_type</span>
+
+        <span class="c1"># API takes presence of some params to mean == true, and the web form uses &#39;on&#39; instead of a boolean.</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_updates_only</span><span class="p">:</span>
+            <span class="n">out</span><span class="p">[</span><span class="s1">&#39;d&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;on&#39;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">prior_point</span><span class="p">:</span>
+            <span class="n">out</span><span class="p">[</span><span class="s1">&#39;p&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;on&#39;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">enums_as_strings</span><span class="p">:</span>
+            <span class="n">out</span><span class="p">[</span><span class="s1">&#39;s&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;on&#39;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">unix_timestamps_ms</span><span class="p">:</span>
+            <span class="n">out</span><span class="p">[</span><span class="s1">&#39;u&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;on&#39;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">adjust_time_to_server_offset</span><span class="p">:</span>
+            <span class="n">out</span><span class="p">[</span><span class="s1">&#39;a&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;on&#39;</span>
+        <span class="c1"># only valid for float events, but that&#39;s left to the user</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">integrate</span><span class="p">:</span>
+            <span class="n">out</span><span class="p">[</span><span class="s1">&#39;i&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;on&#39;</span>
+
+        <span class="c1"># Allow the user to add extra options if they so choose.</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">extra_opts</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">extra_opts</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Using extra_opts - </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">extra_opts</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="n">out</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">extra_opts</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">out</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="MySamplerQuery">
+<a class="viewcode-back" href="../../_autosummary/jlab_archiver_client.query.MySamplerQuery.html#jlab_archiver_client.query.MySamplerQuery">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">MySamplerQuery</span><span class="p">(</span><span class="n">Query</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;A class for containing the arguments needed by mySampler.&quot;&quot;&quot;</span>
+
+    <span class="c1"># noinspection PyMissingConstructor</span>
+<div class="viewcode-block" id="MySamplerQuery.__init__">
+<a class="viewcode-back" href="../../_autosummary/jlab_archiver_client.query.MySamplerQuery.html#jlab_archiver_client.query.MySamplerQuery.__init__">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">start</span><span class="p">:</span> <span class="n">datetime</span><span class="p">,</span> <span class="n">interval</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">num_samples</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">pvlist</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
+                 <span class="n">deployment</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;history&quot;</span><span class="p">,</span> <span class="n">sample_strategy</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+                 <span class="n">data_updates_only</span><span class="p">:</span> <span class="nb">bool</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">enums_as_strings</span><span class="p">:</span> <span class="nb">bool</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                 <span class="n">unix_timestamps_ms</span><span class="p">:</span> <span class="nb">bool</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">adjust_time_to_server_offset</span><span class="p">:</span> <span class="nb">bool</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Construct an instance of MySamplerQuery.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            start: The start date of the query.</span>
+<span class="sd">            interval: The number of milliseconds between each query.</span>
+<span class="sd">            num_samples: The number of samples to take</span>
+<span class="sd">            pvlist: The list of PVs to collect on</span>
+<span class="sd">            deployment: The mya deployment to use.  (Default:&quot;history&quot;, unlike the myquery endpoint).</span>
+<span class="sd">            sample_strategy: The sampling strategy to use.  Options are None (default), &#39;n_queries&#39;, &#39;stream&#39;.  If None,</span>
+<span class="sd">                             then default sampling strategy is determined by the myquery server. &#39;n_queries&#39; queries the</span>
+<span class="sd">                             database once for each data point returned.  &#39;stream&#39; queries the database once per PV and</span>
+<span class="sd">                             constructs the returned data from the stream.  &#39;n_queries&#39; is generally more efficient for</span>
+<span class="sd">                             queries with a large number of update events per sample while &#39;stream&#39; is generally more</span>
+<span class="sd">                             efficient for queries with a small number of update events per sample.  Developer testing</span>
+<span class="sd">                             indicates the threshold for switching strategies to maintain the best response time is</span>
+<span class="sd">                             somewhere around 5,000 update events per sample.</span>
+<span class="sd">            data_updates_only: Should the response ignore events such as &quot;NETWORK_DISCONNECT&quot; and assume the previous</span>
+<span class="sd">                                value is still in effect  (Default: False)</span>
+<span class="sd">            enums_as_strings: Should enum PV values be returned as their names instead of ints</span>
+<span class="sd">            unix_timestamps_ms: Should timestamps be returned as millis since unix epoch</span>
+<span class="sd">            adjust_time_to_server_offset: Should the timestamp be localized to the myquery server</span>
+<span class="sd">            extra_opts: Extra options to pass to the mysampler endpoint.  Helps to future-proof, produces a warning to</span>
+<span class="sd">                        avoid accidental use.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">start</span> <span class="o">=</span> <span class="n">start</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">microsecond</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">isoformat</span><span class="p">()</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;T&quot;</span><span class="p">,</span> <span class="s2">&quot; &quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">interval</span> <span class="o">=</span> <span class="n">interval</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">num_samples</span> <span class="o">=</span> <span class="n">num_samples</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">pvlist</span> <span class="o">=</span> <span class="n">pvlist</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">deployment</span> <span class="o">=</span> <span class="n">deployment</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">sample_strategy</span> <span class="o">=</span> <span class="n">sample_strategy</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">data_updates_only</span> <span class="o">=</span> <span class="n">data_updates_only</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">enums_as_strings</span> <span class="o">=</span> <span class="n">enums_as_strings</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">unix_timestamps_ms</span> <span class="o">=</span> <span class="n">unix_timestamps_ms</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">adjust_time_to_server_offset</span> <span class="o">=</span> <span class="n">adjust_time_to_server_offset</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">extra_opts</span> <span class="o">=</span> <span class="n">kwargs</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">sample_strategy</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">sample_strategy</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sample_strategy</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">sample_strategy</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;n_queries&quot;</span><span class="p">,</span> <span class="s2">&quot;stream&quot;</span><span class="p">):</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;sample_strategy must be None, &#39;n_queries&#39;, or &#39;stream&#39;&quot;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="MySamplerQuery.to_web_params">
+<a class="viewcode-back" href="../../_autosummary/jlab_archiver_client.query.MySamplerQuery.html#jlab_archiver_client.query.MySamplerQuery.to_web_params">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">to_web_params</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Convert the objects command line parameters to their web counterparts&quot;&quot;&quot;</span>
+        <span class="n">out</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;c&#39;</span><span class="p">:</span> <span class="s2">&quot;,&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">pvlist</span><span class="p">),</span>
+               <span class="s1">&#39;b&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">start</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot; &quot;</span><span class="p">,</span> <span class="s2">&quot;T&quot;</span><span class="p">),</span>
+               <span class="s1">&#39;n&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_samples</span><span class="p">,</span>
+               <span class="s1">&#39;m&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">deployment</span><span class="p">,</span>
+               <span class="s1">&#39;s&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">interval</span><span class="p">,</span>
+               <span class="p">}</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">sample_strategy</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">sample_strategy</span> <span class="o">==</span> <span class="s2">&quot;n_queries&quot;</span><span class="p">:</span>
+                <span class="n">out</span><span class="p">[</span><span class="s1">&#39;x&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;n&quot;</span>
+            <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">sample_strategy</span> <span class="o">==</span> <span class="s2">&quot;stream&quot;</span><span class="p">:</span>
+                <span class="n">out</span><span class="p">[</span><span class="s1">&#39;x&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;s&quot;</span>
+
+        <span class="c1"># API takes presence of some params to mean == true, and the web form uses &#39;on&#39; instead of a boolean.</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_updates_only</span><span class="p">:</span>
+            <span class="n">out</span><span class="p">[</span><span class="s1">&#39;d&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;on&#39;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">enums_as_strings</span><span class="p">:</span>
+            <span class="n">out</span><span class="p">[</span><span class="s1">&#39;e&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;on&#39;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">unix_timestamps_ms</span><span class="p">:</span>
+            <span class="n">out</span><span class="p">[</span><span class="s1">&#39;u&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;on&#39;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">adjust_time_to_server_offset</span><span class="p">:</span>
+            <span class="n">out</span><span class="p">[</span><span class="s1">&#39;a&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;on&#39;</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">extra_opts</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">extra_opts</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Using extra_opts - </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">extra_opts</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="n">out</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">extra_opts</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">out</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="ChannelQuery">
+<a class="viewcode-back" href="../../_autosummary/jlab_archiver_client.query.ChannelQuery.html#jlab_archiver_client.query.ChannelQuery">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">ChannelQuery</span><span class="p">(</span><span class="n">Query</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;A class for containing the arguments needed by myquery&#39;s channel endpoint.&quot;&quot;&quot;</span>
+    <span class="c1"># noinspection PyMissingConstructor</span>
+<div class="viewcode-block" id="ChannelQuery.__init__">
+<a class="viewcode-back" href="../../_autosummary/jlab_archiver_client.query.ChannelQuery.html#jlab_archiver_client.query.ChannelQuery.__init__">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pattern</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">limit</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">offset</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+                 <span class="n">deployment</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;history&quot;</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Construct an instance of ChannelQuery.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            pattern: The channel name pattern to match against (SQL patterns)</span>
+<span class="sd">            limit: The maximum number of results to return</span>
+<span class="sd">            offset: The offset to start from</span>
+<span class="sd">            deployment: The mya deployment to use.</span>
+<span class="sd">            kwargs: Additional arguments to pass to the myquery endpoint.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">pattern</span> <span class="o">=</span> <span class="n">pattern</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">limit</span> <span class="o">=</span> <span class="n">limit</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">offset</span> <span class="o">=</span> <span class="n">offset</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">deployment</span> <span class="o">=</span> <span class="n">deployment</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">extra_opts</span> <span class="o">=</span> <span class="n">kwargs</span></div>
+
+
+<div class="viewcode-block" id="ChannelQuery.to_web_params">
+<a class="viewcode-back" href="../../_autosummary/jlab_archiver_client.query.ChannelQuery.html#jlab_archiver_client.query.ChannelQuery.to_web_params">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">to_web_params</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Convert the objects command line parameters to their web counterparts&quot;&quot;&quot;</span>
+        <span class="n">out</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;q&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">pattern</span><span class="p">,</span>
+               <span class="s1">&#39;l&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">limit</span><span class="p">,</span>
+               <span class="s1">&#39;o&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">offset</span><span class="p">,</span>
+               <span class="s1">&#39;m&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">deployment</span><span class="p">,</span>
+               <span class="p">}</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">extra_opts</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">extra_opts</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Using extra_opts - </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">extra_opts</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="n">out</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">extra_opts</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">out</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="PointQuery">
+<a class="viewcode-back" href="../../_autosummary/jlab_archiver_client.query.PointQuery.html#jlab_archiver_client.query.PointQuery">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">PointQuery</span><span class="p">(</span><span class="n">Query</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;A class for holding the parameters of an interval myquery call&quot;&quot;&quot;</span>
+    <span class="c1"># noinspection PyMissingConstructor</span>
+<div class="viewcode-block" id="PointQuery.__init__">
+<a class="viewcode-back" href="../../_autosummary/jlab_archiver_client.query.PointQuery.html#jlab_archiver_client.query.PointQuery.__init__">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">channel</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">time</span><span class="p">:</span> <span class="n">datetime</span><span class="p">,</span>
+                 <span class="n">deployment</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;history&quot;</span><span class="p">,</span>
+                 <span class="n">frac_time_digits</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
+                 <span class="n">sig_figs</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">6</span><span class="p">,</span>
+                 <span class="n">data_updates_only</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+                 <span class="n">forward_time_search</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+                 <span class="n">exclude_given_time</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+                 <span class="n">enums_as_strings</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+                 <span class="n">unix_timestamps_ms</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+                 <span class="n">adjust_time_to_server_offset</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+                 <span class="o">**</span><span class="n">kwargs</span>
+                 <span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Construct a query to the myquery interval service.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            channel: A list of PV Names to query</span>
+<span class="sd">            time: The start time of the query</span>
+<span class="sd">            deployment: The mya deployment to query</span>
+<span class="sd">            frac_time_digits: How many digits should be displayed for fractional seconds</span>
+<span class="sd">            sig_figs: How many significant figures should be reported in the PV values</span>
+<span class="sd">            data_updates_only: Should the response include updates that only include value changes (not disconnects)</span>
+<span class="sd">            forward_time_search: Look forward in time from the given time for the next event (if True)</span>
+<span class="sd">            exclude_given_time:  Don&#39;t include the given time in the search space for the next event (if True)</span>
+<span class="sd">            enums_as_strings:  Should enum PV values be returned as their named strings instead of ints</span>
+<span class="sd">            unix_timestamps_ms:  Should timestamps be returned as millis since unix epoch</span>
+<span class="sd">            adjust_time_to_server_offset: Should the timestamp be localized to the myquery server</span>
+<span class="sd">            integrate: Should the values be integrated (ony supported for float PVs)</span>
+<span class="sd">            kwargs: Any extra parameters to be supplied to the interval web end point.  Will produce a warning if used</span>
+<span class="sd">                    to avoid accidental use.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">channel</span> <span class="o">=</span> <span class="n">channel</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">time</span> <span class="o">=</span> <span class="n">time</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">deployment</span> <span class="o">=</span> <span class="n">deployment</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">frac_time_digits</span> <span class="o">=</span> <span class="n">frac_time_digits</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">sig_figs</span> <span class="o">=</span> <span class="n">sig_figs</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">forward_time_search</span> <span class="o">=</span> <span class="n">forward_time_search</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">exclude_given_time</span> <span class="o">=</span> <span class="n">exclude_given_time</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">data_updates_only</span> <span class="o">=</span> <span class="n">data_updates_only</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">enums_as_strings</span> <span class="o">=</span> <span class="n">enums_as_strings</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">unix_timestamps_ms</span> <span class="o">=</span> <span class="n">unix_timestamps_ms</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">adjust_time_to_server_offset</span> <span class="o">=</span> <span class="n">adjust_time_to_server_offset</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">extra_opts</span> <span class="o">=</span> <span class="n">kwargs</span></div>
+
+
+<div class="viewcode-block" id="PointQuery.to_web_params">
+<a class="viewcode-back" href="../../_autosummary/jlab_archiver_client.query.PointQuery.html#jlab_archiver_client.query.PointQuery.to_web_params">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">to_web_params</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Convert the query to web parameters.</span>
+
+<span class="sd">        Based on myquery v6.2, but use of kwargs makes this more flexible.</span>
+
+<span class="sd">        Example URL that we&#39;re targeting</span>
+<span class="sd">        https://epicsweb.jlab.org/myquery/point?c=channel100&amp;t=2018-04-24+12%3A00%3A00&amp;m=docker&amp;f=&amp;v=&amp;w=on&amp;x=on</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">ts_fmt</span> <span class="o">=</span> <span class="s2">&quot;%Y-%m-</span><span class="si">%d</span><span class="s2">T%H:%M:%S&quot;</span>
+        <span class="n">out</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;c&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">channel</span><span class="p">,</span>
+               <span class="s1">&#39;t&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">time</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="n">ts_fmt</span><span class="p">),</span>
+               <span class="s1">&#39;m&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">deployment</span><span class="p">,</span>
+               <span class="s1">&#39;f&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">frac_time_digits</span><span class="p">,</span>
+               <span class="s1">&#39;v&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">sig_figs</span><span class="p">,</span>
+               <span class="p">}</span>
+
+        <span class="c1"># API takes presence of some params to mean == true, and the web form uses &#39;on&#39; instead of a boolean.</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_updates_only</span><span class="p">:</span>
+            <span class="n">out</span><span class="p">[</span><span class="s1">&#39;d&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;on&#39;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">forward_time_search</span><span class="p">:</span>
+            <span class="n">out</span><span class="p">[</span><span class="s1">&#39;w&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;on&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">exclude_given_time</span><span class="p">:</span>
+            <span class="n">out</span><span class="p">[</span><span class="s1">&#39;x&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;on&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">enums_as_strings</span><span class="p">:</span>
+            <span class="n">out</span><span class="p">[</span><span class="s1">&#39;s&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;on&#39;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">unix_timestamps_ms</span><span class="p">:</span>
+            <span class="n">out</span><span class="p">[</span><span class="s1">&#39;u&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;on&#39;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">adjust_time_to_server_offset</span><span class="p">:</span>
+            <span class="n">out</span><span class="p">[</span><span class="s1">&#39;a&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;on&#39;</span>
+
+        <span class="c1"># Allow the user to add extra options if they so choose.</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">extra_opts</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">extra_opts</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Using extra_opts - </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">extra_opts</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="n">out</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">extra_opts</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">out</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="MyStatsQuery">
+<a class="viewcode-back" href="../../_autosummary/jlab_archiver_client.query.MyStatsQuery.html#jlab_archiver_client.query.MyStatsQuery">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">MyStatsQuery</span><span class="p">(</span><span class="n">Query</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;A class for containing the arguments needed by mystats endpoint.&quot;&quot;&quot;</span>
+
+    <span class="c1"># noinspection PyMissingConstructor</span>
+<div class="viewcode-block" id="MyStatsQuery.__init__">
+<a class="viewcode-back" href="../../_autosummary/jlab_archiver_client.query.MyStatsQuery.html#jlab_archiver_client.query.MyStatsQuery.__init__">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
+                 <span class="n">pvlist</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
+                 <span class="n">start</span><span class="p">:</span> <span class="n">datetime</span><span class="p">,</span>
+                 <span class="n">end</span><span class="p">:</span> <span class="n">datetime</span><span class="p">,</span>
+                 <span class="n">num_bins</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
+                 <span class="n">deployment</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;history&quot;</span><span class="p">,</span>
+                 <span class="n">frac_time_digits</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
+                 <span class="n">sig_figs</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">6</span><span class="p">,</span>
+                 <span class="n">data_updates_only</span><span class="p">:</span> <span class="nb">bool</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                 <span class="n">enums_as_strings</span><span class="p">:</span> <span class="nb">bool</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                 <span class="n">unix_timestamps_ms</span><span class="p">:</span> <span class="nb">bool</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                 <span class="n">adjust_time_to_server_offset</span><span class="p">:</span> <span class="nb">bool</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                 <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Construct an instance of MyStatsQuery.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            pvlist: The list of PVs to collect on</span>
+<span class="sd">            start: The start date/time of the query.</span>
+<span class="sd">            end: The end date/time of the query.</span>
+<span class="sd">            num_bins: The number of bins to compute statistics over</span>
+<span class="sd">            deployment: The mya deployment to use.  (Default:&quot;history&quot;, unlike the myquery endpoint).</span>
+<span class="sd">            data_updates_only: Should the response ignore events such as &quot;NETWORK_DISCONNECT&quot; and assume the previous</span>
+<span class="sd">                                value is still in effect  (Default: False)</span>
+<span class="sd">            enums_as_strings: Should enum PV values be returned as their names instead of ints</span>
+<span class="sd">            unix_timestamps_ms: Should timestamps be returned as millis since unix epoch</span>
+<span class="sd">            adjust_time_to_server_offset: Should the timestamp be localized to the myquery server</span>
+<span class="sd">            kwargs: Extra options to pass to the mysampler endpoint.  Helps to future-proof, produces a warning to</span>
+<span class="sd">                        avoid accidental use.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">pvlist</span> <span class="o">=</span> <span class="n">pvlist</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">start</span> <span class="o">=</span> <span class="n">start</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">end</span> <span class="o">=</span> <span class="n">end</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">num_bins</span> <span class="o">=</span> <span class="n">num_bins</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">deployment</span> <span class="o">=</span> <span class="n">deployment</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">frac_time_digits</span> <span class="o">=</span> <span class="n">frac_time_digits</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">sig_figs</span> <span class="o">=</span> <span class="n">sig_figs</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">data_updates_only</span> <span class="o">=</span> <span class="n">data_updates_only</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">enums_as_strings</span> <span class="o">=</span> <span class="n">enums_as_strings</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">unix_timestamps_ms</span> <span class="o">=</span> <span class="n">unix_timestamps_ms</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">adjust_time_to_server_offset</span> <span class="o">=</span> <span class="n">adjust_time_to_server_offset</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">extra_opts</span> <span class="o">=</span> <span class="n">kwargs</span></div>
+
+
+<div class="viewcode-block" id="MyStatsQuery.to_web_params">
+<a class="viewcode-back" href="../../_autosummary/jlab_archiver_client.query.MyStatsQuery.html#jlab_archiver_client.query.MyStatsQuery.to_web_params">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">to_web_params</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Convert the objects command line parameters to their web counterparts&quot;&quot;&quot;</span>
+        <span class="n">out</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;c&#39;</span><span class="p">:</span> <span class="s2">&quot;,&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">pvlist</span><span class="p">),</span>
+               <span class="s1">&#39;b&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">start</span><span class="o">.</span><span class="n">isoformat</span><span class="p">(),</span>
+               <span class="s1">&#39;e&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">end</span><span class="o">.</span><span class="n">isoformat</span><span class="p">(),</span>
+               <span class="s1">&#39;n&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_bins</span><span class="p">,</span>
+               <span class="s1">&#39;m&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">deployment</span><span class="p">,</span>
+               <span class="s1">&#39;f&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">frac_time_digits</span><span class="p">,</span>
+               <span class="s1">&#39;v&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">sig_figs</span><span class="p">,</span>
+               <span class="p">}</span>
+
+        <span class="c1"># API takes presence of some params to mean == true, and the web form uses &#39;on&#39; instead of a boolean.</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_updates_only</span><span class="p">:</span>
+            <span class="n">out</span><span class="p">[</span><span class="s1">&#39;d&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;on&#39;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">unix_timestamps_ms</span><span class="p">:</span>
+            <span class="n">out</span><span class="p">[</span><span class="s1">&#39;u&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;on&#39;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">adjust_time_to_server_offset</span><span class="p">:</span>
+            <span class="n">out</span><span class="p">[</span><span class="s1">&#39;a&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;on&#39;</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">extra_opts</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">extra_opts</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Using extra_opts - </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">extra_opts</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="n">out</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">extra_opts</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">out</span></div>
+</div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright .</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

@@ -1,0 +1,6 @@
+jlab\_archiver\_client.exceptions.MyqueryException
+==================================================
+
+.. currentmodule:: jlab_archiver_client.exceptions
+
+.. autoexception:: MyqueryException

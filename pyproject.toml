@@ -16,8 +16,8 @@ classifiers = [
     "Programming Language :: Python :: 3",
 ]
 dependencies = [
-    'numpy  >= 1.24, < 2.0',
-    'pandas >= 1.5.3, < 2.0',
+    'numpy  >= 2.0.0, < 3.0',
+    'pandas >= 2.2.2, < 3.0',
     'requests >= 2.28.2, < 3',
 ]
 

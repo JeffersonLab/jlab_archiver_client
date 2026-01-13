@@ -88,25 +88,25 @@ class TestMyStats(unittest.TestCase):
         data = {
             'channel1': [
                 # 2019-08-12 00:00:00
-                4.292270e+04,  # duration
-                1.809400e+04,  # eventCount
-                3.482493e+06,  # integration
-                9.896990e+01,  # max
-                8.113410e+01,  # mean
-                0.000000e+00,  # min
-                8.609530e+01,  # rms
-                2.880380e+01,  # stdev
-                1.809300e+04,  # updateCount
+                42922.7005689144134521484375,  # duration
+                18094,  # eventCount
+                3482493.015712834894657135009765625,  # integration
+                98.9699,  # max
+                81.1341,  # mean
+                0,  # min
+                86.0953,  # rms
+                28.8038,  # stdev
+                18093,  # updateCount
                 # 2019-08-12 12:00:00
-                4.272572e+04,  # duration
-                1.489600e+04,  # eventCount
-                2.828281e+06,  # integration
-                1.039970e+02,  # max
-                6.619620e+01,  # mean
-                0.000000e+00,  # min
-                7.405190e+01,  # rms
-                3.319260e+01,  # stdev
-                1.489500e+04,  # updateCount
+                43200,  # duration
+                14898,  # eventCount
+                2831334.8737724614329636096954345703125,  # integration
+                103.997,  # max
+                65.5402,  # mean
+                0,  # min
+                73.6489,  # rms
+                33.5954,  # stdev
+                14897,  # updateCount
             ]
         }
 

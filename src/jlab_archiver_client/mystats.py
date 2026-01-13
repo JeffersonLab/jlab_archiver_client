@@ -183,12 +183,14 @@ class MyStats:
 
         # Process one channel at a time, then concat Series into a DataFrame
         series_by_channel = {}
-        self.metadata = {}
         for ch_name, ch_obj in channels.items():
             if "error" in ch_obj.keys():
                 warnings.warn(f"Error querying {ch_name}: {ch_obj['error']}")
             else:
                 series_by_channel[ch_name] = self._channel_series(ch_obj)
+                if self.metadata is None:
+                    self.metadata = {}
                 self.metadata[ch_name] = ch_obj['metadata']
 
-        self.data = pd.concat(series_by_channel, axis=1).sort_index()
+        if len(series_by_channel) > 0:
+            self.data = pd.concat(series_by_channel, axis=1).sort_index()

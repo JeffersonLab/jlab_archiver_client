@@ -286,3 +286,25 @@ class TestMySampler(unittest.TestCase):
                                    sample_strategy="invalid_strategy")
 
         self.assertIn("sample_strategy must be None, 'n_queries', or 'stream'", str(context.exception))
+
+    def test_get_mysampler_102(self):
+        """Test mysampler query for channel102 over similar time range as channel101."""
+
+        query = MySamplerQuery(start=datetime.strptime("2018-04-24 12:00:00", "%Y-%m-%d %H:%M:%S"),
+                                       interval=600_000,  # 10 minutes
+                                       num_samples=10,
+                                       pvlist=["channel102"],
+                                       deployment="docker")
+
+        mysampler = MySampler(query)
+        mysampler.run()
+        res_data = mysampler.data
+        res_disconnects = mysampler.disconnects
+        res_metadata = mysampler.metadata
+
+        # self.save_mysampler_data("mysampler_102", res_data, res_disconnects, res_metadata)
+        exp_data, exp_disconnects, exp_metadata = self.load_mysampler_data("mysampler_102")
+        exp_data = exp_data.apply(process_vector_series, axis=0)
+        exp_data[exp_data.isnull()] = None
+        self.check_mysampler_result(exp_data, exp_disconnects, exp_metadata, res_data, res_disconnects,
+                                    res_metadata)

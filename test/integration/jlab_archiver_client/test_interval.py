@@ -264,3 +264,22 @@ class TestInterval(unittest.TestCase):
         exp = self.df_s1_s2
         result = Interval._combine_series([self.s1, self.s2])
         self.assertTrue(exp.equals(result), f"\nExp:\n{exp}\nResult:\n{result}\n")
+
+    def test_get_interval_102(self):
+        """Test query for channel102 (waveform type) over similar time range as channel101."""
+        pv = "channel102"
+        query = IntervalQuery(channel=pv,
+                                      begin=datetime.strptime("2018-04-24", "%Y-%m-%d"),
+                                      end=datetime.strptime("2018-05-01", "%Y-%m-%d"),
+                                      deployment="docker"
+                                      )
+        interval = Interval(query)
+        interval.run()
+        res_data = interval.data
+        res_disconnects = interval.disconnects
+        res_metadata = interval.metadata
+
+        # self.save_interval_data("interval_102", res_data, res_disconnects, res_metadata)
+        exp_data, exp_disconnects, exp_metadata = self.load_interval_data("interval_102", pv=pv)
+        exp_data = exp_data.apply(process_vector_series, by_row=False)
+        self.check_interval_result(exp_data, exp_disconnects, exp_metadata, res_data, res_disconnects, res_metadata)

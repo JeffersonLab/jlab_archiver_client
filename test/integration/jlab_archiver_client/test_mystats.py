@@ -171,3 +171,20 @@ class TestMyStats(unittest.TestCase):
 
         pd.testing.assert_frame_equal(exp_data, res_data)
         self.assertDictEqual(exp_metadata, res_metadata)
+
+    def test_get_mystats_102(self):
+        """Test mystats query for channel102 over similar time range as channel101."""
+        mystats = MyStats(MyStatsQuery(pvlist=["channel102"],
+                                       start=datetime.strptime("2018-04-24", "%Y-%m-%d"),
+                                       end=datetime.strptime("2018-05-01", "%Y-%m-%d"),
+                                       num_bins=6,
+                                       deployment="docker")
+                          )
+        mystats.run()
+
+        # stats only available for scalar float events
+        res_data = mystats.data
+        res_metadata = mystats.metadata
+
+        self.assertIsNone(res_data)
+        self.assertIsNone(res_metadata)

@@ -27,7 +27,10 @@ class TestChannel(unittest.TestCase):
                {"name": "channel100", "datatype": "DBR_DOUBLE", "datasize": 1, "datahost": "mya", "ioc": None,
                 "active": True},
                {"name": "channel101", "datatype": "DBR_DOUBLE", "datasize": 1, "datahost": "mya", "ioc": None,
-                "active": True}]
+                "active": True},
+               {"name": "channel102", "datatype": "DBR_SHORT", "datasize": 11, "datahost": "mya", "ioc": None,
+                "active": True},
+               ]
 
         self.assertEqual(exp, result)
 
@@ -41,8 +44,9 @@ class TestChannel(unittest.TestCase):
                 "active": True},
                {"name": "channel101", "datatype": "DBR_DOUBLE", "datasize": 1, "datahost": "mya", "ioc": None,
                 "active": True},
-               {"name": "channel2", "datatype": "DBR_ENUM", "datasize": 1, "datahost": "mya", "ioc": None,
-                "active": True}]
+               {"name": "channel102", "datatype": "DBR_SHORT", "datasize": 11, "datahost": "mya", "ioc": None,
+                "active": True},
+               ]
 
         self.assertEqual(exp, result)
 
@@ -52,5 +56,16 @@ class TestChannel(unittest.TestCase):
         channel.run()
         result = channel.matches
         exp = []
+
+        self.assertEqual(exp, result)
+
+    def test_get_channel_102(self):
+        """Test getting channel102's info"""
+        channel = Channel(ChannelQuery(pattern="channel102", deployment="docker"))
+        channel.run()
+        result = channel.matches
+
+        exp = [{"name": "channel102", "datatype": "DBR_SHORT", "datasize": 11, "datahost": "mya", "ioc": None,
+                "active": True}]
 
         self.assertEqual(exp, result)

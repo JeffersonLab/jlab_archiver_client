@@ -25,6 +25,22 @@ def convert_data_to_series(values: List[Any], ts: List[Any], name: str, metadata
         appropriate datatype.  The index is the timestamps of each sample.
     """
 
+    def _process_vector_pv(v: str, dtype: Any) -> Any:
+        """Process vector-valued PV data from string format to numpy array.
+
+        Args:
+            v: String representation of vector data
+            dtype: Numpy dtype to convert to
+
+        Returns:
+            Numpy array of converted data
+        """
+        if v is None:
+            out = None
+        else:
+            out = np.array(np.array(v), dtype=dtype)
+        return out
+
     if metadata['datasize'] == 1:
         if metadata["returnCount"] == 0:
             data = pd.Series([], index=ts, name=name, dtype=object)
@@ -34,14 +50,14 @@ def convert_data_to_series(values: List[Any], ts: List[Any], name: str, metadata
     elif metadata['datatype'] in ("DBR_DOUBLE", "DBR_FLOAT"):
         # Cast to float (64-bit is adequate for both)
         data = pd.Series(values, index=ts, name=name)
-        data = data.apply(lambda x: np.array(np.array(x), dtype=float))
+        data = data.apply(lambda x: _process_vector_pv(x, float))
     elif metadata['datatype'] in ("DBR_SHORT", "DBR_LONG"):
         # Cast to int (64-bit is adequate for both)
         data = pd.Series(values, index=ts, name=name)
-        data = data.apply(lambda x: np.array(np.fromstring(x, sep=","), dtype=int))
+        data = data.apply(lambda x: _process_vector_pv(x, int))
     elif metadata['datatype'] == "DBR_ENUM" and not enums_as_strings:
         data = pd.Series(values, index=ts, name=name)
-        data = data.apply(lambda x: np.array(np.fromstring(x, sep=","), dtype=int))
+        data = data.apply(lambda x: _process_vector_pv(x, int))
     else:
         # This will return values as an array of str
         data = pd.Series(values, index=ts, name=name)

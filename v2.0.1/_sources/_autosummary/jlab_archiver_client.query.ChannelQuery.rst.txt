@@ -1,0 +1,27 @@
+# docsrc/source/_templates/custom-class-template.rst
+jlab\_archiver\_client.query.ChannelQuery
+=========================================
+
+.. currentmodule:: jlab_archiver_client.query
+
+.. autoclass:: ChannelQuery
+   :members:
+   :show-inheritance:
+   :inherited-members:
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~ChannelQuery.__init__
+      ~ChannelQuery.to_web_params
+   
+   
+
+   
+   
+   

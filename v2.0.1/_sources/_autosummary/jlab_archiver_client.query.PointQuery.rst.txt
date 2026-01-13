@@ -1,0 +1,27 @@
+# docsrc/source/_templates/custom-class-template.rst
+jlab\_archiver\_client.query.PointQuery
+=======================================
+
+.. currentmodule:: jlab_archiver_client.query
+
+.. autoclass:: PointQuery
+   :members:
+   :show-inheritance:
+   :inherited-members:
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~PointQuery.__init__
+      ~PointQuery.to_web_params
+   
+   
+
+   
+   
+   

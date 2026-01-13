@@ -56,3 +56,18 @@ class TestPointQuery(unittest.TestCase):
         exp = {'name': 'channel100', 'datatype': 'DBR_DOUBLE', 'datasize': 1, 'datahost': 'mya',
                'data': {'d': 1524587471397, 'v': 5.7}}
         self.assertDictEqual(exp, result)
+
+    def test_get_point_102(self):
+        """Test point query for channel102 over similar time range as channel101."""
+
+        point = Point(PointQuery(channel="channel102",
+                                 time=datetime.strptime("2018-04-24 12:00:00", "%Y-%m-%d %H:%M:%S"),
+                                 deployment="docker",
+                                 ))
+        point.run()
+        result = point.event
+
+        exp = {"datatype": "DBR_SHORT", "datasize": 11, "datahost": "mya",
+               "data": {"d": "2018-04-24 11:18:19", "x": True, "t": "UNKNOWN_UNAVAILABILTY"},
+               "name": "channel102"}
+        self.assertDictEqual(exp, result)

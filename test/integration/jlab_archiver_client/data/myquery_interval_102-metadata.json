@@ -1,0 +1,9 @@
+{
+  "datatype": "DBR_SHORT",
+  "datasize": 11,
+  "datahost": "mya",
+  "ioc": null,
+  "active": true,
+  "sampled": false,
+  "returnCount": 10
+}

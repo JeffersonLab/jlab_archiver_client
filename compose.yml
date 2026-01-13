@@ -7,6 +7,7 @@ services:
     volumes:
       - ./docker/mycontainer/100_channel.sql:/docker-entrypoint-initdb.d/100_channel.sql
       - ./docker/mycontainer/101_channel.sql:/docker-entrypoint-initdb.d/101_channel.sql
+      - ./docker/mycontainer/102_channel.sql:/docker-entrypoint-initdb.d/102_channel.sql
     environment:
       - MYSQL_PASSWORD=password
       - MYSQL_ROOT_PASSWORD=password
@@ -16,7 +17,7 @@ services:
       timeout: 10s
       retries: 12
   myquery:
-    image: jeffersonlab/myquery:6.2.0
+    image: jeffersonlab/myquery:6.3.1
     hostname: myquery
     ports:
       - "8080:8080"

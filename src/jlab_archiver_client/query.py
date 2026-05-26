@@ -165,6 +165,7 @@ class MySamplerQuery(Query):
     # noinspection PyMissingConstructor
     def __init__(self, start: datetime, interval: int, num_samples: int, pvlist: List[str],
                  deployment: Optional[str] = "history", sample_strategy: Optional[str] = None,
+                 frac_time_digits: Optional[int] = None, sig_figs: Optional[int] = None,
                  data_updates_only: bool=False, enums_as_strings: bool=False,
                  unix_timestamps_ms: bool=False, adjust_time_to_server_offset: bool=False, **kwargs):
         """Construct an instance of MySamplerQuery.
@@ -183,6 +184,8 @@ class MySamplerQuery(Query):
                              efficient for queries with a small number of update events per sample.  Developer testing
                              indicates the threshold for switching strategies to maintain the best response time is
                              somewhere around 5,000 update events per sample.
+            frac_time_digits: How many digits should a fractional second contain
+            sig_figs: How many significant figures should the data values should contain?
             data_updates_only: Should the response ignore events such as "NETWORK_DISCONNECT" and assume the previous
                                 value is still in effect  (Default: False)
             enums_as_strings: Should enum PV values be returned as their names instead of ints
@@ -197,6 +200,8 @@ class MySamplerQuery(Query):
         self.pvlist = pvlist
         self.deployment = deployment
         self.sample_strategy = sample_strategy
+        self.frac_time_digits = frac_time_digits
+        self.sig_figs = sig_figs
         self.data_updates_only = data_updates_only
         self.enums_as_strings = enums_as_strings
         self.unix_timestamps_ms = unix_timestamps_ms
@@ -222,6 +227,12 @@ class MySamplerQuery(Query):
                 out['x'] = "n"
             elif self.sample_strategy == "stream":
                 out['x'] = "s"
+
+        if self.frac_time_digits is not None:
+            out['f'] = int(self.frac_time_digits)
+        if self.sig_figs is not None:
+            out['v'] = int(self.sig_figs)
+
 
         # API takes presence of some params to mean == true, and the web form uses 'on' instead of a boolean.
         if self.data_updates_only:

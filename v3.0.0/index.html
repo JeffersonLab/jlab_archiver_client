@@ -1,0 +1,461 @@
+# docsrc/source/_templates/layout.html
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>jlab_archiver_client Documentation &mdash; jlab_archiver_client 1.1.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=fc837d61"></script>
+      <script src="_static/doctools.js?v=9bcbadda"></script>
+      <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="jlab_archiver_client" href="_autosummary/jlab_archiver_client.html" />
+<!--suppress ALL -->
+<link href="_static/rtd_custom.css" rel="stylesheet" type="text/css">
+
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="#" class="icon icon-home">
+            jlab_archiver_client
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="_autosummary/jlab_archiver_client.html">jlab_archiver_client</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="#">jlab_archiver_client</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="#" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">jlab_archiver_client Documentation</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/index.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="jlab-archiver-client-documentation">
+<h1>jlab_archiver_client Documentation<a class="headerlink" href="#jlab-archiver-client-documentation" title="Link to this heading"></a></h1>
+<section id="api">
+<h2>API:<a class="headerlink" href="#api" title="Link to this heading"></a></h2>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="_autosummary/jlab_archiver_client.html#module-jlab_archiver_client" title="jlab_archiver_client"><code class="xref py py-obj docutils literal notranslate"><span class="pre">jlab_archiver_client</span></code></a></p></td>
+<td><p>This package provides a Python interface to the JLab Archiver's myquery service.</p></td>
+</tr>
+</tbody>
+</table>
+<ul class="simple">
+<li><p><a class="reference internal" href="genindex.html"><span class="std std-ref">Index</span></a></p></li>
+<li><p><a class="reference internal" href="py-modindex.html"><span class="std std-ref">Module Index</span></a></p></li>
+</ul>
+</section>
+<section id="project-overview">
+<h2>Project Overview<a class="headerlink" href="#project-overview" title="Link to this heading"></a></h2>
+<section id="jlab-archiver-client">
+<h3>jlab_archiver_client<a class="headerlink" href="#jlab-archiver-client" title="Link to this heading"></a></h3>
+<p>A Python client library for querying the Jefferson Lab EPICS archiver (MYA) via the myquery web service.</p>
+<p>It is intended for non-mission critical applications such as data analysis and uses the CEBAF read-only archiver deployment by default.  CEBAF mission critical applications should use internal libraries that provide direct access to the operations-oriented deployment.</p>
+<section id="overview">
+<h4>Overview<a class="headerlink" href="#overview" title="Link to this heading"></a></h4>
+<p>This package provides a convenient Python interface to the myquery web service, making archived EPICS Process Variable (PV) data easily accessible for analysis. Data is returned in familiar pandas data structures (Series and DataFrames) with datetime indices for time-series analysis.</p>
+<p>The package supports multiple myquery endpoints:</p>
+<ul class="simple">
+<li><p><strong>interval</strong>: Retrieve all archived events for a PV over a time range</p></li>
+<li><p><strong>mysampler</strong>: Get regularly-spaced samples across multiple PVs</p></li>
+<li><p><strong>mystats</strong>: Compute statistical aggregations over time bins</p></li>
+<li><p><strong>point</strong>: Retrieve a single event at a specific time</p></li>
+<li><p><strong>channel</strong>: Search and discover available channel names</p></li>
+</ul>
+</section>
+<section id="key-features">
+<h4>Key Features<a class="headerlink" href="#key-features" title="Link to this heading"></a></h4>
+<ul class="simple">
+<li><p><strong>Pandas Integration</strong>: All data returned as pandas Series, DataFrames, and simple dictionaries</p></li>
+<li><p><strong>Datetime Indexing</strong>: Time-series data with proper datetime indices</p></li>
+<li><p><strong>Disconnect Handling</strong>: Non-update events tracked separately</p></li>
+<li><p><strong>Parallel Queries</strong>: Limited support for multi-channel queries with concurrent execution</p></li>
+<li><p><strong>Type Safety</strong>: Query builder classes with parameter validation</p></li>
+<li><p><strong>Enum Support</strong>: Option to convert enum values to strings</p></li>
+<li><p><strong>Thread-Safe Config</strong>: Runtime configuration changes supported</p></li>
+<li><p><strong>History Deployment</strong>: Defaults to Jefferson Lab’s read-only history deployment</p></li>
+<li><p><strong>Command Line Interface</strong>: Command-line tools for quick queries</p></li>
+</ul>
+</section>
+<section id="api-documentation">
+<h4>API Documentation<a class="headerlink" href="#api-documentation" title="Link to this heading"></a></h4>
+<p>Documentation can be found <a class="reference external" href="https://jeffersonlab.github.io/jlab_archiver_client/">here</a></p>
+</section>
+<section id="see-also">
+<h4>See Also<a class="headerlink" href="#see-also" title="Link to this heading"></a></h4>
+<ul class="simple">
+<li><p><a class="reference external" href="https://pypi.org/project/jlab-archiver-client">PyPI</a></p></li>
+<li><p><a class="reference external" href="https://github.com/JeffersonLab/myquery">myquery</a></p></li>
+<li><p><a class="reference external" href="https://github.com/JeffersonLab/jmyapi">jmyapi</a></p></li>
+<li><p><a class="reference external" href="https://github.com/JeffersonLab/wave">wave</a></p></li>
+</ul>
+</section>
+<section id="installation">
+<h4>Installation<a class="headerlink" href="#installation" title="Link to this heading"></a></h4>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>jlab_archiver_client
+</pre></div>
+</div>
+</section>
+<section id="developer-quick-start-guide">
+<h4>Developer Quick Start Guide<a class="headerlink" href="#developer-quick-start-guide" title="Link to this heading"></a></h4>
+<p>Download the repo, create a virtual environment using pythong 3.11+, and install the package in editable mode with
+development dependencies.  Then develop using your preferred IDE, etc.</p>
+<p><em>Linux (bash)</em></p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/JeffersonLab/jlab_archiver_client
+<span class="nb">cd</span><span class="w"> </span>jlab_archiver_client
+python3.11<span class="w"> </span>-m<span class="w"> </span>venv<span class="w"> </span>venv
+<span class="c1"># bash</span>
+<span class="nb">source</span><span class="w"> </span>venv/bin/activate
+pip<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </span>.<span class="o">[</span>dev<span class="o">]</span>
+</pre></div>
+</div>
+<p><em>Linux (tcsh / csh)</em></p>
+<div class="highlight-csh notranslate"><div class="highlight"><pre><span></span>git clone https://github.com/JeffersonLab/jlab_archiver_client
+<span class="nb">cd </span>jlab_archiver_client
+python3.11 -m venv venv
+<span class="c"># tcsh / csh</span>
+<span class="nb">source </span>venv/bin/activate.csh
+pip install -e <span class="s1">&#39;.[dev]&#39;</span>
+</pre></div>
+</div>
+<p><em>Windows (PowerShell)</em></p>
+<div class="highlight-PowerShell notranslate"><div class="highlight"><pre><span></span><span class="n">git</span> <span class="n">clone</span> <span class="n">https</span><span class="p">://</span><span class="n">github</span><span class="p">.</span><span class="n">com</span><span class="p">/</span><span class="n">JeffersonLab</span><span class="p">/</span><span class="n">jlab_archiver_client</span>
+<span class="nb">cd </span><span class="n">jlab_archiver_client</span>
+<span class="p">\</span><span class="n">path</span><span class="p">\</span><span class="n">to</span><span class="p">\</span><span class="n">python3</span> <span class="n">-m</span> <span class="n">venv</span> <span class="n">venv</span>
+<span class="n">venv</span><span class="p">\</span><span class="n">Scripts</span><span class="p">\</span><span class="n">activate</span><span class="p">.</span><span class="n">ps1</span>
+<span class="n">pip</span> <span class="n">install</span> <span class="n">-e</span> <span class="p">.</span><span class="no">[dev]</span>
+</pre></div>
+</div>
+<p>To start the provided database.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">docker</span> <span class="n">compose</span> <span class="n">up</span>
+</pre></div>
+</div>
+<section id="testing">
+<h5>Testing<a class="headerlink" href="#testing" title="Link to this heading"></a></h5>
+<p>This application supports testing using <code class="docutils literal notranslate"><span class="pre">pytest</span></code> and code coverage using <code class="docutils literal notranslate"><span class="pre">coverage</span></code>.  Configuration in <code class="docutils literal notranslate"><span class="pre">pyproject.toml</span></code>.
+Integration tests required that the provided docker container(s) are running.  <a class="reference external" href="https://github.com/JeffersonLab/jlab_archiver_client/.github/workflows/test.yml">Tests</a> are automatically run on appropriate triggers.</p>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>Test Type</p></th>
+<th class="head"><p>Command</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>Unit</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">pytest</span> <span class="pre">test/unit</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p>Integration</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">pytest</span> <span class="pre">test/integration</span></code></p></td>
+</tr>
+<tr class="row-even"><td><p>Unit &amp; Integration</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">pytest</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p>Code Coverage Report</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">pytest</span> <span class="pre">--cov-report=html</span></code></p></td>
+</tr>
+<tr class="row-even"><td><p>Linting</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">ruff</span>&#160; <span class="pre">check</span> <span class="pre">[--fix]</span></code></p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="documentation">
+<h5>Documentation<a class="headerlink" href="#documentation" title="Link to this heading"></a></h5>
+<p>Documentation is done in Sphinx and automatically built and published to GitHub Pages when triggering a new <a class="reference external" href="https://github.com/JeffersonLab/jlab_archiver_client/.github/workflows/release.yml">release</a>.  To build documentation, run this commands from the project root.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">sphinx</span><span class="o">-</span><span class="n">build</span> <span class="o">-</span><span class="n">b</span> <span class="n">html</span> <span class="n">docsrc</span><span class="o">/</span><span class="n">source</span> <span class="n">build</span><span class="o">/</span><span class="n">docs</span>
+</pre></div>
+</div>
+</section>
+<section id="release">
+<h5>Release<a class="headerlink" href="#release" title="Link to this heading"></a></h5>
+<p>Release are generated automatically when the VERSION file receives a commit on the main branch.  Artifacts (packages) are deployed to PyPI automatically as this is intended for a broader audience.  Build artifacts are automatically attached to the releases when generated along with the python dependency information for the build (requirements.txt).</p>
+</section>
+</section>
+<section id="configuration-optional">
+<h4>Configuration (Optional)<a class="headerlink" href="#configuration-optional" title="Link to this heading"></a></h4>
+<p>The package come pre-configured for use with CEBAF’s production myquery service.  This requires authentication when used offsite, which this package does not currently support.</p>
+<p>If you need to access a non-standard myquery or the development container bundled in this repo, then configure the myquery server first.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">jlab_archiver_client.config</span><span class="w"> </span><span class="kn">import</span> <span class="n">config</span>
+
+<span class="c1"># For production</span>
+<span class="n">config</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">myquery_server</span><span class="o">=</span><span class="s2">&quot;epicsweb.jlab.org&quot;</span><span class="p">,</span> <span class="n">protocol</span><span class="o">=</span><span class="s2">&quot;https&quot;</span><span class="p">)</span>
+
+<span class="c1"># For local development/testing</span>
+<span class="n">config</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">myquery_server</span><span class="o">=</span><span class="s2">&quot;localhost:8080&quot;</span><span class="p">,</span> <span class="n">protocol</span><span class="o">=</span><span class="s2">&quot;http&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="usage-examples">
+<h4>Usage Examples<a class="headerlink" href="#usage-examples" title="Link to this heading"></a></h4>
+<section id="mysampler-regularly-sampled-data">
+<h5>MySampler - Regularly Sampled Data<a class="headerlink" href="#mysampler-regularly-sampled-data" title="Link to this heading"></a></h5>
+<p>Query multiple PVs at regularly spaced time intervals. Useful for synchronized sampling across channels.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">jlab_archiver_client</span><span class="w"> </span><span class="kn">import</span> <span class="n">MySampler</span><span class="p">,</span> <span class="n">MySamplerQuery</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">datetime</span>
+
+<span class="c1"># Query two channels with 30-minute intervals</span>
+<span class="n">query</span> <span class="o">=</span> <span class="n">MySamplerQuery</span><span class="p">(</span>
+    <span class="n">start</span><span class="o">=</span><span class="n">datetime</span><span class="o">.</span><span class="n">strptime</span><span class="p">(</span><span class="s2">&quot;2019-08-12 00:00:00&quot;</span><span class="p">,</span> <span class="s2">&quot;%Y-%m-</span><span class="si">%d</span><span class="s2"> %H:%M:%S&quot;</span><span class="p">),</span>
+    <span class="n">interval</span><span class="o">=</span><span class="mi">1_800_000</span><span class="p">,</span>  <span class="c1"># 30 minutes in milliseconds</span>
+    <span class="n">num_samples</span><span class="o">=</span><span class="mi">15</span><span class="p">,</span>
+    <span class="n">pvlist</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;R12XGMES&quot;</span><span class="p">,</span> <span class="s2">&quot;R13XGMES&quot;</span><span class="p">],</span>
+<span class="p">)</span>
+
+<span class="n">mysampler</span> <span class="o">=</span> <span class="n">MySampler</span><span class="p">(</span><span class="n">query</span><span class="p">)</span>
+<span class="n">mysampler</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
+
+<span class="c1"># Access the data as a DataFrame with datetime index</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">mysampler</span><span class="o">.</span><span class="n">data</span><span class="p">)</span>
+                     <span class="n">R12XGMES</span>  <span class="n">R13XGMES</span>
+<span class="n">Date</span>
+<span class="mi">2019</span><span class="o">-</span><span class="mi">08</span><span class="o">-</span><span class="mi">12</span> <span class="mi">00</span><span class="p">:</span><span class="mi">00</span><span class="p">:</span><span class="mi">00</span>    <span class="mf">57.265</span>    <span class="mf">44.813</span>
+<span class="mi">2019</span><span class="o">-</span><span class="mi">08</span><span class="o">-</span><span class="mi">12</span> <span class="mi">00</span><span class="p">:</span><span class="mi">30</span><span class="p">:</span><span class="mi">00</span>    <span class="mf">57.265</span>    <span class="mf">44.811</span>
+<span class="mi">2019</span><span class="o">-</span><span class="mi">08</span><span class="o">-</span><span class="mi">12</span> <span class="mi">01</span><span class="p">:</span><span class="mi">00</span><span class="p">:</span><span class="mi">00</span>    <span class="mf">57.265</span>    <span class="mf">44.811</span>
+<span class="mi">2019</span><span class="o">-</span><span class="mi">08</span><span class="o">-</span><span class="mi">12</span> <span class="mi">01</span><span class="p">:</span><span class="mi">30</span><span class="p">:</span><span class="mi">00</span>    <span class="mf">57.265</span>    <span class="mf">44.811</span>
+<span class="o">...</span>
+
+<span class="c1"># Access disconnect events - dictionary of chanel_names: pd.Series</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">mysampler</span><span class="o">.</span><span class="n">disconnects</span><span class="p">)</span>
+<span class="p">{}</span>
+
+<span class="c1"># Access channel metadata</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">mysampler</span><span class="o">.</span><span class="n">metadata</span><span class="p">)</span>
+<span class="p">{</span><span class="s1">&#39;R12XGMES&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;metadata&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;name&#39;</span><span class="p">:</span> <span class="s1">&#39;R12XGMES&#39;</span><span class="p">,</span> <span class="s1">&#39;datatype&#39;</span><span class="p">:</span> <span class="s1">&#39;DBR_DOUBLE&#39;</span><span class="p">,</span> <span class="s1">&#39;datasize&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s1">&#39;datahost&#39;</span><span class="p">:</span> <span class="s1">&#39;hstmya3&#39;</span><span class="p">,</span> <span class="s1">&#39;ioc&#39;</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span> <span class="s1">&#39;active&#39;</span><span class="p">:</span> <span class="kc">True</span><span class="p">},</span> <span class="s1">&#39;returnCount&#39;</span><span class="p">:</span> <span class="mi">15</span><span class="p">},</span> <span class="s1">&#39;R13XGMES&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;metadata&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;name&#39;</span><span class="p">:</span> <span class="s1">&#39;R13XGMES&#39;</span><span class="p">,</span> <span class="s1">&#39;datatype&#39;</span><span class="p">:</span> <span class="s1">&#39;DBR_DOUBLE&#39;</span><span class="p">,</span> <span class="s1">&#39;datasize&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s1">&#39;datahost&#39;</span><span class="p">:</span> <span class="s1">&#39;hstmya0&#39;</span><span class="p">,</span> <span class="s1">&#39;ioc&#39;</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span> <span class="s1">&#39;active&#39;</span><span class="p">:</span> <span class="kc">True</span><span class="p">},</span> <span class="s1">&#39;returnCount&#39;</span><span class="p">:</span> <span class="mi">15</span><span class="p">}}</span>
+
+</pre></div>
+</div>
+</section>
+<section id="interval-all-events-in-time-range">
+<h5>Interval - All Events in Time Range<a class="headerlink" href="#interval-all-events-in-time-range" title="Link to this heading"></a></h5>
+<p>Retrieve all archived events for a single PV. Best for detailed event history.  Also includes option to run multiple interval queries in parallel and return combined results.  This results in a single DataFrame with a row for each timestamp that any <em>single</em> channel updated.</p>
+<p><strong>Note:</strong> Example assumes you are running the provided docker container.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">jlab_archiver_client</span><span class="w"> </span><span class="kn">import</span> <span class="n">Interval</span><span class="p">,</span> <span class="n">IntervalQuery</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">datetime</span>
+
+<span class="c1"># Query a single channel for all events</span>
+<span class="n">query</span> <span class="o">=</span> <span class="n">IntervalQuery</span><span class="p">(</span>
+    <span class="n">channel</span><span class="o">=</span><span class="s2">&quot;channel100&quot;</span><span class="p">,</span>
+    <span class="n">begin</span><span class="o">=</span><span class="n">datetime</span><span class="p">(</span><span class="mi">2018</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">24</span><span class="p">),</span>
+    <span class="n">end</span><span class="o">=</span><span class="n">datetime</span><span class="p">(</span><span class="mi">2018</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span>
+    <span class="n">deployment</span><span class="o">=</span><span class="s2">&quot;docker&quot;</span>
+<span class="p">)</span>
+
+<span class="n">interval</span> <span class="o">=</span> <span class="n">Interval</span><span class="p">(</span><span class="n">query</span><span class="p">)</span>
+<span class="n">interval</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
+
+<span class="c1"># Access data as a pandas Series</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">interval</span><span class="o">.</span><span class="n">data</span><span class="p">)</span>
+<span class="c1"># 2018-04-24 06:25:01    0.000</span>
+<span class="c1"># 2018-04-24 06:25:05    5.911</span>
+<span class="c1"># 2018-04-24 11:18:19    5.660</span>
+<span class="c1"># ...</span>
+
+<span class="c1"># Access disconnect events separately</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">interval</span><span class="o">.</span><span class="n">disconnects</span><span class="p">)</span>
+
+<span class="c1"># For multiple channels, use parallel queries</span>
+<span class="n">data</span><span class="p">,</span> <span class="n">disconnects</span><span class="p">,</span> <span class="n">metadata</span> <span class="o">=</span> <span class="n">Interval</span><span class="o">.</span><span class="n">run_parallel</span><span class="p">(</span>
+    <span class="n">pvlist</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;channel2&quot;</span><span class="p">,</span> <span class="s2">&quot;channel3&quot;</span><span class="p">],</span>
+    <span class="n">begin</span><span class="o">=</span><span class="n">datetime</span><span class="p">(</span><span class="mi">2019</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">12</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span>
+    <span class="n">end</span><span class="o">=</span><span class="n">datetime</span><span class="p">(</span><span class="mi">2019</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">12</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">20</span><span class="p">,</span> <span class="mi">45</span><span class="p">),</span>
+    <span class="n">deployment</span><span class="o">=</span><span class="s2">&quot;docker&quot;</span><span class="p">,</span>
+    <span class="n">prior_point</span><span class="o">=</span><span class="kc">True</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="mystats-statistical-aggregations">
+<h5>MyStats - Statistical Aggregations<a class="headerlink" href="#mystats-statistical-aggregations" title="Link to this heading"></a></h5>
+<p>Compute statistics (min, max, mean, etc.) over time bins. Efficient for analyzing trends.</p>
+<p><strong>Note:</strong> Statistical computations are performed on the myquery server which saves on outbound traffic, but still requires all data be streamed to the myquery server.</p>
+<p><strong>Note:</strong> Example assumes you are running the provided docker container.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">jlab_archiver_client</span><span class="w"> </span><span class="kn">import</span> <span class="n">MyStats</span><span class="p">,</span> <span class="n">MyStatsQuery</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">datetime</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
+
+<span class="c1"># Query statistics with 1-hour bins</span>
+<span class="n">query</span> <span class="o">=</span> <span class="n">MyStatsQuery</span><span class="p">(</span>
+    <span class="n">start</span><span class="o">=</span><span class="n">datetime</span><span class="o">.</span><span class="n">strptime</span><span class="p">(</span><span class="s2">&quot;2019-08-12 00:00:00&quot;</span><span class="p">,</span> <span class="s2">&quot;%Y-%m-</span><span class="si">%d</span><span class="s2"> %H:%M:%S&quot;</span><span class="p">),</span>
+    <span class="n">end</span><span class="o">=</span><span class="n">datetime</span><span class="o">.</span><span class="n">strptime</span><span class="p">(</span><span class="s2">&quot;2019-08-13 00:00:00&quot;</span><span class="p">,</span> <span class="s2">&quot;%Y-%m-</span><span class="si">%d</span><span class="s2"> %H:%M:%S&quot;</span><span class="p">),</span>
+    <span class="n">num_bins</span><span class="o">=</span><span class="mi">24</span><span class="p">,</span>  <span class="c1"># 24 bins (one hour per bin)</span>
+    <span class="n">pvlist</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;channel1&quot;</span><span class="p">,</span> <span class="s2">&quot;channel100&quot;</span><span class="p">],</span>
+    <span class="n">deployment</span><span class="o">=</span><span class="s2">&quot;docker&quot;</span>
+<span class="p">)</span>
+
+<span class="n">mystats</span> <span class="o">=</span> <span class="n">MyStats</span><span class="p">(</span><span class="n">query</span><span class="p">)</span>
+<span class="n">mystats</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
+
+<span class="c1"># Access data as MultiIndex DataFrame (timestamp, stat)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">mystats</span><span class="o">.</span><span class="n">data</span><span class="p">)</span>
+<span class="c1">#                                   channel1    channel100</span>
+<span class="c1"># timestamp           stat</span>
+<span class="c1"># 2019-08-12 00:00:00 duration    3594.421033   3600.000000</span>
+<span class="c1">#                     eventCount  1716.000000      2.000000</span>
+<span class="c1">#                     max           96.952400      5.658000</span>
+<span class="c1">#                     mean          94.964400      5.658000</span>
+<span class="c1"># ...</span>
+
+<span class="c1"># Query specific statistics at a time</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">mystats</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="s1">&#39;2019-08-12 00:00:00&#39;</span><span class="p">])</span>
+
+<span class="c1"># Query specific stat and time</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">mystats</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">loc</span><span class="p">[(</span><span class="n">pd</span><span class="o">.</span><span class="n">Timestamp</span><span class="p">(</span><span class="s1">&#39;2019-08-12 00:00:00&#39;</span><span class="p">),</span> <span class="s1">&#39;mean&#39;</span><span class="p">),</span> <span class="s1">&#39;channel1&#39;</span><span class="p">])</span>
+<span class="c1"># 94.9644</span>
+
+<span class="c1"># Query a range of times and stats using IndexSlice</span>
+<span class="n">idx</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">IndexSlice</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">mystats</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">idx</span><span class="p">[</span><span class="s1">&#39;2019-08-12 00:00:00&#39;</span><span class="p">:</span><span class="s1">&#39;2019-08-12 12:00:00&#39;</span><span class="p">,</span> <span class="p">[</span><span class="s1">&#39;mean&#39;</span><span class="p">,</span> <span class="s1">&#39;max&#39;</span><span class="p">]],</span> <span class="p">:])</span>
+</pre></div>
+</div>
+</section>
+<section id="point-single-event-query">
+<h5>Point - Single Event Query<a class="headerlink" href="#point-single-event-query" title="Link to this heading"></a></h5>
+<p>Retrieve a single event at or near a specific timestamp.</p>
+<p><strong>Note:</strong> Example assumes you are running the provided docker container.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">jlab_archiver_client</span><span class="w"> </span><span class="kn">import</span> <span class="n">Point</span><span class="p">,</span> <span class="n">PointQuery</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">datetime</span>
+
+<span class="c1"># Get the event at or before a specific time</span>
+<span class="n">query</span> <span class="o">=</span> <span class="n">PointQuery</span><span class="p">(</span>
+    <span class="n">channel</span><span class="o">=</span><span class="s2">&quot;channel1&quot;</span><span class="p">,</span>
+    <span class="n">time</span><span class="o">=</span><span class="n">datetime</span><span class="o">.</span><span class="n">strptime</span><span class="p">(</span><span class="s2">&quot;2019-08-12 12:00:00&quot;</span><span class="p">,</span> <span class="s2">&quot;%Y-%m-</span><span class="si">%d</span><span class="s2"> %H:%M:%S&quot;</span><span class="p">),</span>
+    <span class="n">deployment</span><span class="o">=</span><span class="s2">&quot;docker&quot;</span>
+<span class="p">)</span>
+
+<span class="n">point</span> <span class="o">=</span> <span class="n">Point</span><span class="p">(</span><span class="n">query</span><span class="p">)</span>
+<span class="n">point</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
+
+<span class="c1"># Access event data</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">point</span><span class="o">.</span><span class="n">event</span><span class="p">)</span>
+<span class="c1"># {&#39;datatype&#39;: &#39;DBR_DOUBLE&#39;, &#39;datasize&#39;: 1, &#39;datahost&#39;: &#39;mya&#39;,</span>
+<span class="c1">#  &#39;data&#39;: {&#39;d&#39;: &#39;2019-08-12 11:55:22&#39;, &#39;v&#39;: 6.20794}}</span>
+</pre></div>
+</div>
+</section>
+<section id="channel-search-for-channels">
+<h5>Channel - Search for Channels<a class="headerlink" href="#channel-search-for-channels" title="Link to this heading"></a></h5>
+<p>Discover available channels and their metadata using SQL-style pattern matching.</p>
+<p><strong>Note:</strong> Example assumes you are running the provided docker container.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">jlab_archiver_client</span><span class="w"> </span><span class="kn">import</span> <span class="n">Channel</span><span class="p">,</span> <span class="n">ChannelQuery</span>
+
+<span class="c1"># Search for all channels starting with &quot;channel10&quot;</span>
+<span class="n">query</span> <span class="o">=</span> <span class="n">ChannelQuery</span><span class="p">(</span><span class="n">pattern</span><span class="o">=</span><span class="s2">&quot;channel10%&quot;</span><span class="p">,</span> <span class="n">deployment</span><span class="o">=</span><span class="s2">&quot;docker&quot;</span><span class="p">)</span>
+
+<span class="n">channel</span> <span class="o">=</span> <span class="n">Channel</span><span class="p">(</span><span class="n">query</span><span class="p">)</span>
+<span class="n">channel</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
+
+<span class="c1"># Access matching channels</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">channel</span><span class="o">.</span><span class="n">matches</span><span class="p">)</span>
+<span class="c1"># [{&#39;name&#39;: &#39;channel100&#39;, &#39;datatype&#39;: &#39;DBR_DOUBLE&#39;, &#39;datasize&#39;: 1, ...},</span>
+<span class="c1">#  {&#39;name&#39;: &#39;channel101&#39;, &#39;datatype&#39;: &#39;DBR_DOUBLE&#39;, &#39;datasize&#39;: 1, ...}]</span>
+</pre></div>
+</div>
+</section>
+<section id="command-line-tools">
+<h5>Command Line Tools<a class="headerlink" href="#command-line-tools" title="Link to this heading"></a></h5>
+<p>This package includes command-line tools for quick queries.  After installation, use the <code class="docutils literal notranslate"><span class="pre">--help</span></code> or <code class="docutils literal notranslate"><span class="pre">-h</span></code> flag for usage information.</p>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>Command</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">jac-interval</span></code></p></td>
+<td><p>Query all events for a single PV over a time range</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">jac-mysampler</span></code></p></td>
+<td><p>Regularly sample multiple PVs</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">jac-mystats</span></code></p></td>
+<td><p>Compute statistical aggregations over time bins</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">jac-point</span></code></p></td>
+<td><p>Retrieve a single event at or near a specific time</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">jac-channel</span></code></p></td>
+<td><p>Search and discover available channel names and metadata</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+</section>
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="_autosummary/jlab_archiver_client.html" class="btn btn-neutral float-right" title="jlab_archiver_client" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright .</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

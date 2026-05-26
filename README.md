@@ -97,7 +97,7 @@ sphinx-build -b html docsrc/source build/docs
 ```
 
 ### Release
-Release are generated automatically when the VERSION file recieves a commit on the main branch.  Artifcats (packages) are deployed to PyPI automatically as this is intended for a broader audience.  Build artifacts are automatically attached to the releases when generated along with the python dependency information for the build (requirements.txt).
+Release are generated automatically when the VERSION file receives a commit on the main branch.  Artifacts (packages) are deployed to PyPI automatically as this is intended for a broader audience.  Build artifacts are automatically attached to the releases when generated along with the python dependency information for the build (requirements.txt).
 
 
 

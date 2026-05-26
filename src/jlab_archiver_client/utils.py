@@ -200,3 +200,22 @@ def check_response(r: requests.Response) -> None:
         else:
             msg = r.reason
         raise requests.RequestException(f"Error contacting server. status={r.status_code} details={msg}")
+
+
+def format_index_ns(idx: pd.Index, n_frac: int=9) -> np.array:
+    """Format a datetime index so that it shows the requested number of fractional seconds."""
+    if not 0 <= n_frac <= MAX_FRACTIONAL_SECOND_DIGITS:
+        raise ValueError("n_frac must be 0–9")
+    if idx.dtype != "datetime64[ns]":
+        raise ValueError("index must be datetime64[ns]")
+
+    # whole seconds only
+    secs = pd.Series(idx.strftime("%Y-%m-%d %H:%M:%S"))
+
+    if n_frac == 0:
+        return secs.to_numpy()
+
+    # fractional seconds if requested
+    ns   = pd.Series(idx.to_numpy().view("int64") % 1_000_000_000)
+    frac = ns.astype(str).str.zfill(9)
+    return (secs + "." + frac.str[:n_frac]).to_numpy()

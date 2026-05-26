@@ -27,7 +27,7 @@ def process_vector_series(x: pd.Series):
             continue
         if isinstance(val, str):
             if val.startswith("[") and val.endswith("]"):
-                x[i] = np.fromstring(val.strip("[]"), sep=" ", dtype=float)
+                x[i] = np.fromstring(val.strip("[]"), sep=" ", dtype=np.float32)
         elif isinstance(val, float):
             pass
         elif isinstance(val, object):
@@ -35,7 +35,7 @@ def process_vector_series(x: pd.Series):
             # noinspection PyUnresolvedReferences
             if val.str.startswith("[") and val.str.endswith("]"):
                 # noinspection PyUnresolvedReferences
-                x[i] = np.fromstring(val.str.strip("[]"), sep=" ", dtype=float)
+                x[i] = np.fromstring(val.str.strip("[]"), sep=" ", dtype=np.float32)
 
     return x
 
@@ -52,6 +52,9 @@ class TestMySampler(unittest.TestCase):
         """Load test case data for mysampler"""
         exp_data = pd.read_csv(f"{DIR}/data/myquery_{ident}-data.csv", index_col=0)
         exp_data.index = pd.to_datetime(exp_data.index)
+        for col in exp_data:
+            if exp_data[col].dtype == "float64":
+                exp_data[col] = exp_data[col].astype("float32")
 
         with open(f"{DIR}/data/myquery_{ident}-disconnects.json", "r") as f:
             exp_disconnects = json.load(f)
@@ -104,8 +107,8 @@ class TestMySampler(unittest.TestCase):
         exp_data, exp_disconnects, exp_metadata = self.load_mysampler_data("mysampler_1")
         self.check_mysampler_result(exp_data, exp_disconnects, exp_metadata, res_data, res_disconnects,
                                     res_metadata)
-        self.assertEqual(res_data.channel100.dtype, float)
-        self.assertEqual(res_data.channel101.dtype, float)
+        self.assertEqual(np.float32, res_data.channel100.dtype)
+        self.assertEqual(np.float32, res_data.channel101.dtype)
 
 
     def test_get_mysampler_2(self):
@@ -126,8 +129,8 @@ class TestMySampler(unittest.TestCase):
         exp_data, exp_disconnects, exp_metadata = self.load_mysampler_data("mysampler_2")
         self.check_mysampler_result(exp_data, exp_disconnects, exp_metadata, res_data, res_disconnects,
                                res_metadata)
-        self.assertEqual(res_data.channel100.dtype, float)
-        self.assertEqual(res_data.channel101.dtype, float)
+        self.assertEqual(np.float32, res_data.channel100.dtype)
+        self.assertEqual(np.float32, res_data.channel101.dtype)
 
 
     def test_get_mysampler_3(self):
@@ -146,10 +149,12 @@ class TestMySampler(unittest.TestCase):
         res_metadata = mysampler.metadata
 
         exp_data, exp_disconnects, exp_metadata = self.load_mysampler_data("mysampler_3")
+        exp_data['channel2'] = exp_data['channel2'].astype("Int16")
+
         self.check_mysampler_result(exp_data, exp_disconnects, exp_metadata, res_data, res_disconnects,
                                res_metadata)
-        self.assertEqual(res_data.channel1.dtype, float)
-        self.assertEqual(res_data.channel2.dtype, float)
+        self.assertEqual(np.float32, res_data.channel1.dtype)
+        self.assertEqual(pd.Int16Dtype(), res_data.channel2.dtype)
 
 
     def test_get_mysampler_4(self):
@@ -171,8 +176,8 @@ class TestMySampler(unittest.TestCase):
         exp_data, exp_disconnects, exp_metadata = self.load_mysampler_data("mysampler_4")
         self.check_mysampler_result(exp_data, exp_disconnects, exp_metadata, res_data, res_disconnects,
                                res_metadata)
-        self.assertEqual(res_data.channel1.dtype, float)
-        self.assertEqual(res_data.channel2.dtype, object)
+        self.assertEqual(np.float32, res_data.channel1.dtype)
+        self.assertEqual(object, res_data.channel2.dtype)
 
 
 
@@ -199,8 +204,8 @@ class TestMySampler(unittest.TestCase):
 
         self.check_mysampler_result(exp_data, exp_disconnects, exp_metadata, res_data, res_disconnects,
                                res_metadata)
-        self.assertEqual(res_data.channel2.dtype, object)
-        self.assertEqual(res_data.channel3.dtype, object)
+        self.assertEqual(object, res_data.channel2.dtype)
+        self.assertEqual(object, res_data.channel3.dtype)
 
     def test_get_mysampler_history_origin(self):
         """Test mysampler when the first sample is both a non-standard update event ("CHANNELS_PRIOR_DATA_DISCARDED")"""
@@ -217,15 +222,13 @@ class TestMySampler(unittest.TestCase):
         res_disconnects = mysampler.disconnects
         res_metadata = mysampler.metadata
 
-        print(res_data)
-        print(res_disconnects)
-        print(res_metadata)
-
         exp_data, exp_disconnects, exp_metadata = self.load_mysampler_data("mysampler_history_origin")
+        exp_data['channel2'] = exp_data['channel2'].astype("Int16")
+
         self.check_mysampler_result(exp_data, exp_disconnects, exp_metadata, res_data, res_disconnects,
                                res_metadata)
-        self.assertEqual(res_data.channel1.dtype, float)
-        self.assertEqual(res_data.channel2.dtype, float)
+        self.assertEqual(np.float32, res_data.channel1.dtype)
+        self.assertEqual(pd.Int16Dtype(), res_data.channel2.dtype)
 
 
     def test_get_mysampler_with_n_queries_strategy(self):
@@ -248,8 +251,8 @@ class TestMySampler(unittest.TestCase):
         exp_data, exp_disconnects, exp_metadata = self.load_mysampler_data("mysampler_1")
         self.check_mysampler_result(exp_data, exp_disconnects, exp_metadata, res_data, res_disconnects,
                                     res_metadata)
-        self.assertEqual(res_data.channel100.dtype, float)
-        self.assertEqual(res_data.channel101.dtype, float)
+        self.assertEqual(np.float32, res_data.channel100.dtype)
+        self.assertEqual(np.float32, res_data.channel101.dtype)
 
     def test_get_mysampler_with_stream_strategy(self):
         """Test query with sample_strategy='stream'.  Should match test_mysampler_1."""
@@ -271,8 +274,8 @@ class TestMySampler(unittest.TestCase):
         exp_data, exp_disconnects, exp_metadata = self.load_mysampler_data("mysampler_1")
         self.check_mysampler_result(exp_data, exp_disconnects, exp_metadata, res_data, res_disconnects,
                                     res_metadata)
-        self.assertEqual(res_data.channel100.dtype, float)
-        self.assertEqual(res_data.channel101.dtype, float)
+        self.assertEqual(np.float32, res_data.channel100.dtype)
+        self.assertEqual(np.float32, res_data.channel101.dtype)
 
     def test_get_mysampler_invalid_strategy(self):
         """Test that invalid sample_strategy raises ValueError."""

@@ -408,7 +408,7 @@ class TestMySamplerMain(unittest.TestCase):
     @patch('jlab_archiver_client.scripts.MySampler')
     @patch('sys.argv')
     def test_mysampler_main_without_sample_strategy(self, mock_argv, mock_mysampler_class):
-        """Test mysampler_main without sample_strategy (should default to None in query)."""
+        """Test mysampler_main without sample_strategy (should default to 'stream' in query)."""
         mock_argv.__getitem__ = lambda s, i: [
             'jac-mysampler',
             '-c', 'channel1', 'channel20',
@@ -424,7 +424,7 @@ class TestMySamplerMain(unittest.TestCase):
         call_args = mock_mysampler_class.call_args
         query = call_args[0][0]
 
-        self.assertIsNone(query.sample_strategy)
+        self.assertEquals("stream", query.sample_strategy)
 
 
 class TestMyStatsMain(unittest.TestCase):

@@ -68,18 +68,22 @@ Note:
 See Also:
     jlab_archiver_client.query.MySamplerQuery: Query builder for mysampler requests
     jlab_archiver_client.config: Configuration settings for archiver endpoints
-""" # noqa: E501
-from typing import Optional, Dict
+"""  # noqa: E501
+from typing import Optional, Dict, Tuple
 
+import numpy as np
 import pandas as pd
 import requests
+import ijson
+from requests import RequestException
 
 from jlab_archiver_client import utils
 from jlab_archiver_client.query import MySamplerQuery
 from jlab_archiver_client.config import config
 
-
 __all__ = ["MySampler"]
+
+from jlab_archiver_client.utils import convert_multivalue_sample
 
 
 class MySampler:
@@ -131,54 +135,275 @@ class MySampler:
 
         # Make the request
         opts = self.query.to_web_params()
-        r = requests.get(self.url, params=opts)
+        n_samples = int(opts["n"])
+        with requests.get(self.url, params=opts, stream=True) as r:
+            if r.status_code is not requests.codes.ok:
+                raise RequestException(r.status_code)
+            if 'v' in opts:
+                self.data, self.metadata, self.disconnects = _parse_json_iteratively(
+                    r,
+                    num_samples=n_samples,
+                    enums_as_strings=self.query.enums_as_strings,
+                    sig_figs=int(opts["v"]),
+                )
+            else:
+                self.data, self.metadata, self.disconnects = _parse_json_iteratively(
+                    r,
+                    num_samples=n_samples,
+                    enums_as_strings=self.query.enums_as_strings,
+                    sig_figs=6,
+                )
 
-        # Check if we have any errors
-        utils.check_response(r)
+def _parse_json_iteratively(response: requests.Response, num_samples: int, # noqa: PLR0912, PLR0915
+                            enums_as_strings: bool, sig_figs: int | None,
+                            ) -> Tuple[pd.DataFrame, Dict[str, dict], Dict[str, pd.Series]]:
+    """Stream-parse the mysampler JSON with a ijson.basic_parse approach and manual state machine.
 
-        # Single top level key is channels
-        channels = r.json()['channels']
+    Note: basic_parse skips the per-event prefix-string construction that ijson.parse does, which is the dominant
+    overhead for million-event streams.  This makes it noticeably more memory efficient than ijson.parse.
 
-        # This will hold the information for the data, disconnects, and metadata fields respectively
-        samples = {'Date': []}
-        disconnects = {}
-        metadata = {}
+    Args:
+        response: The Response object to parse.  Assumed to be from a "get" call with stream=True.
+        num_samples: The number of samples we expect to have
+        enums_as_strings: Are enumerated type variables expected as strings or ints.  strings if True
+        sig_figs: How many significant figures did the end user want for numeric data.
+    """
 
-        # Process the response for each channel
-        for idx, channel in enumerate(channels.keys()):
-            for key in channels[channel].keys():
-                if key == "data":
-                    # Values, timestamps kep in shared list 'Date'
-                    v = []
-                    # Disconnect values (strings)
-                    dv = []
-                    # Disconnect timestamps
-                    dts = []
-                    for sample in channels[channel]['data']:
-                        # Grab only one datetime series
-                        if idx == 0:
-                            samples['Date'].append(sample['d'])
+    response.raw.decode_content = True
+    parser = ijson.basic_parse(response.raw, use_float=True)
 
-                        # Handle disconnect events
-                        if 't' in sample.keys():
-                            dts.append(sample['d'])
-                            dv.append(sample['t'])
-                        if 'v' in sample.keys():
-                            v.append(sample['v'])
-                        else:
-                            # Should be identical to x=True in JSON response
-                            v.append(None)
-                    samples[channel] = v
+    # Integer state constants — faster compares than strings, clearer than magic numbers.
+    OUTSIDE = 0
+    ROOT = 1  # inside the top-level {}
+    CHANNELS = 2  # inside the "channels" map
+    CHANNEL = 3  # inside one channel's map
+    METADATA = 4  # inside a channel's "metadata" map
+    DATA = 5  # inside a channel's "data" array
+    SAMPLE = 6  # inside one sample's map within data
+    SAMPLE_V_ARRAY = 7  # inside a sample's "v": [...] (multivalue PVs only)
+    LABELS = 8 # inside a channels enumerated labels section (only for enum types).  Points to an array of label_sets
+    LABEL_SET = 9 # inside a label_set object from an array of labels
+    LABEL_VALUES = 10 # inside a map of ints to string labels from within a label_set
 
-                    if len(dts) > 0:
-                        disconnects[channel] = pd.Series(dv, index=dts, name=channel)
+    state = OUTSIDE
+    current_key = None
+    metadata_key = None
 
+    # Per-channel
+    channel_name = None
+    first_channel = None
+    is_first_channel = False
+    metadata = None
+    new_type = None
+    is_multivalue = False
+    is_integer = False
+    v_array = None
+    v_mask = None
+    v_idx = 0
+    dv = None
+    dts = None
+    labels = None # Array of label set objects ([{"d": <date>, "values": ["enum0", ...]}]
+
+    # Per-label_set
+    label_set_key = None # 'd' or 'values' within a label set
+    label_date = None  # a date string
+    label_values = None  # array of enum string labels, indexed by corresponding enum int
+
+    # Per-sample (scalars, no dict)
+    sample_d = None
+    sample_v = None
+    sample_t = None
+    sample_v_set = False
+    sample_v_list = None
+
+    # Aggregates
+    dates = np.empty(num_samples, dtype="datetime64[ns]")
+    metadata_set: Dict[str, dict] = {}
+    disconnects: Dict[str, pd.Series] = {}
+    channel_arrays: Dict[str, np.ndarray] = {}
+
+    # Hot-path local references — saves a LOAD_GLOBAL per event for tight inner work.
+    nan = np.nan
+
+    for event, value in parser:
+        # Ordered by expected frequency in the hot path: value events first
+        # (string/number per d/v/t), then map_key, then map/array delimiters.
+        if event == "map_key":
+            if state == SAMPLE:
+                current_key = value
+            elif state == METADATA:
+                metadata_key = value
+            elif state == CHANNEL:
+                current_key = value
+            elif state == LABELS:
+                # should not happen as "labels" only maps to an array
+                pass
+            elif state == LABEL_VALUES:
+                label_map_key = value
+            elif state == LABEL_SET:
+                 label_set_key = value
+            elif state == CHANNELS:
+                channel_name = value
+                if first_channel is None:
+                    first_channel = channel_name
+                is_first_channel = (channel_name == first_channel)
+            # ROOT has only "channels" — no-op.
+
+        elif event == "start_map":
+            if state == DATA:
+                # New sample — reset scalar slots.
+                sample_d = None
+                sample_v = None
+                sample_t = None
+                sample_v_set = False
+                state = SAMPLE
+            elif state == CHANNEL and current_key == "metadata":
+                # This will include both "true" metadata, return count, and labels if they exist.
+                metadata = {"metadata": {}}
+                state = METADATA
+            elif state == LABELS:
+                state = LABEL_SET
+            elif state == CHANNELS:
+                state = CHANNEL
+            elif state == ROOT:
+                state = CHANNELS
+            elif state == OUTSIDE:
+                state = ROOT
+
+        elif event == "end_map":
+            if state == SAMPLE:
+                if is_first_channel:
+                    dates[v_idx] = np.datetime64(sample_d)
+                if sample_t is not None:
+                    dts.append(sample_d)
+                    dv.append(sample_t)
+
+                if sample_v_set:
+                    if is_multivalue:
+                        v_array[v_idx] = convert_multivalue_sample(sample_v, new_type)
+                    else:
+                        v_array[v_idx] = sample_v
+                elif is_multivalue:
+                    v_array[v_idx] = convert_multivalue_sample(None, new_type)
                 else:
-                    if channel not in metadata.keys():
-                        metadata[channel] = {}
-                    metadata[channel][key] = channels[channel][key]
+                    # "v" not set and this is a single valued PV
+                    if is_integer:
+                        v_mask[v_idx] = True
+                    elif is_str:
+                        v_array[v_idx] = None
+                    else:
+                        v_array[v_idx] = nan
 
-        # Update the object with the processed response
-        self.data = utils.convert_data_to_dataframe(samples, metadata, self.query.enums_as_strings)
-        self.disconnects = disconnects
-        self.metadata = metadata
+                v_idx += 1
+                state = DATA
+
+            elif state == METADATA:
+                # End of one channel's metadata — set up its writer state.
+                new_type = utils.get_data_types(
+                    metadata=metadata["metadata"],
+                    enums_as_strings=enums_as_strings,
+                    sig_figs=sig_figs,
+                )
+                is_multivalue = metadata["metadata"]["datasize"] != 1
+                # We only want to track if the dtype will be integer.  multivalued PVs will have an object dtype
+                is_integer = np.issubdtype(new_type, np.integer) if not is_multivalue else False
+                is_str = new_type is str if not is_multivalue else False
+                metadata_set[metadata["metadata"]["name"]] = metadata
+
+                if is_multivalue:
+                    v_array = np.empty(num_samples, dtype=object)
+                    v_mask = None
+                elif is_integer:
+                    v_array = np.zeros(num_samples, dtype=new_type)
+                    v_mask = np.zeros(num_samples, dtype=bool)
+                elif is_str:
+                    v_array = [None] * num_samples
+                    v_mask = None
+                else: # float, etc.
+                    v_array = np.empty(num_samples, dtype=new_type)
+                    v_mask = None
+                v_idx = 0
+                dv = []
+                dts = []
+                state = CHANNEL
+
+            elif state == LABEL_SET:
+                labels.append({"d": label_date, "value": label_values})
+                state = LABELS
+
+            elif state == CHANNEL:
+                # End of one channel — stash its array and disconnects.
+                if is_integer:
+                    column = pd.arrays.IntegerArray(v_array, v_mask, copy=False)
+                else:
+                    column = v_array
+                channel_arrays[channel_name] = column
+                disconnects[channel_name] = pd.Series(dv, index=dts, name=channel_name)
+                state = CHANNELS
+
+            elif state == CHANNELS:
+                state = ROOT
+            elif state == ROOT:
+                state = OUTSIDE
+
+        elif event == "start_array":
+            if state == CHANNEL and current_key == "data":
+                state = DATA
+            elif state == SAMPLE and current_key == "v":
+                sample_v_list = []
+                state = SAMPLE_V_ARRAY
+            elif state == CHANNEL and current_key == "labels":
+                labels = []
+                state = LABELS
+            elif state == LABEL_SET and label_set_key == "value":
+                label_values = []
+                state = LABEL_VALUES
+            elif state == LABELS:
+                pass # no array in LABELS state
+
+        elif event == "end_array":
+            if state == DATA:
+                state = CHANNEL
+            elif state == SAMPLE_V_ARRAY:
+                sample_v = sample_v_list
+                sample_v_set = True
+                sample_v_list = None
+                state = SAMPLE
+            elif state == LABEL_VALUES:
+                state = LABEL_SET
+            elif state == LABELS:
+                metadata['labels'] = labels
+                state = CHANNEL
+
+        # Value event: string / number / integer / boolean / null.
+        elif state == SAMPLE:
+            if current_key == "d":
+                sample_d = value
+            elif current_key == "v":
+                sample_v = value
+                sample_v_set = True
+            elif current_key == "t":
+                sample_t = value
+        elif state == METADATA:
+            metadata["metadata"][metadata_key] = value
+        elif state == SAMPLE_V_ARRAY:
+            sample_v_list.append(value)
+        elif state == LABEL_VALUES:
+            label_values.append(value)
+        elif state == LABEL_SET and label_set_key == "d":
+            label_date = value
+        elif state == CHANNEL:
+            metadata[current_key] = value
+
+    # Build the DataFrame once, no incremental column assignment.
+    if first_channel is not None:
+        df = pd.DataFrame(
+            channel_arrays,
+            index=dates,
+            copy=False,
+        )
+    else:
+        df = pd.DataFrame()
+    df.index.name = "Date"
+
+    return df, metadata_set, disconnects

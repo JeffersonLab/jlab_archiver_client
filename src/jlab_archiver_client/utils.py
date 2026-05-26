@@ -6,6 +6,12 @@ import pandas as pd
 import requests
 
 
+# Max time precision from myquery is nanoseconds or nine decimal places
+MAX_FRACTIONAL_SECOND_DIGITS = 9
+# How many significant figures can a np.float32 reasonably handle.
+SIG_FIGS_FLOAT_MAX = 6
+
+
 def convert_data_to_series(values: List[Any], ts: List[Any], name: str, metadata: Dict[str, Any],
                            enums_as_strings: bool) -> pd.Series:
     """Process the data response from myquery.
@@ -66,9 +72,48 @@ def convert_data_to_series(values: List[Any], ts: List[Any], name: str, metadata
 
     return data
 
+def get_data_types(metadata, enums_as_strings: bool, sig_figs: int =6) -> type:
+    """Determine the datatype that should be used in a pandas DataFrame to represent this data."""
+
+    rtyp = metadata['datatype']
+
+    if rtyp == "DBR_FLOAT":
+        # Cast to float (64-bit is adequate for both)
+        out = np.float32
+    elif rtyp in "DBR_DOUBLE" and sig_figs <= SIG_FIGS_FLOAT_MAX:
+        # Cast to float (64-bit is adequate for both)
+        out = np.float32
+    elif rtyp in "DBR_DOUBLE":
+        # Cast to float (64-bit is adequate for both)
+        out = np.float64
+    elif rtyp == "DBR_SHORT":
+        # Cast to int (64-bit is adequate for both)
+        out = np.int32
+    elif rtyp == "DBR_LONG" and sig_figs <= SIG_FIGS_FLOAT_MAX:
+        # Cast to int (64-bit is adequate for both)
+        out = np.int32
+    elif rtyp == "DBR_LONG":
+        # Cast to int (64-bit is adequate for both)
+        out = np.int64
+    elif rtyp == "DBR_ENUM" and not enums_as_strings:
+        out = np.int16
+    else:
+        # We will leave them as a list of strings
+        out = str
+
+    return out
+
+def convert_multivalue_sample(sample, dtype) -> np.ndarray:
+    """Convert a list of strings to a numpy array of the appropriate type and handle None"""
+    if sample is None:
+        out = None
+    else:
+        out = np.array(sample, dtype=dtype)
+    return out
+
 
 def convert_data_to_dataframe(samples: Dict[str, Any], metadata: Dict[str, Dict[str,Any]],
-                           enums_as_strings: bool) -> pd.DataFrame:
+                           enums_as_strings: bool, sig_figs: int = 6) -> pd.DataFrame:
     """Process the data response from myquery if multiple channels are included.
 
     If the data is scalar (datasize == 1), then pandas can automatically determine the type.  When datasize > 1, myquery
@@ -79,6 +124,7 @@ def convert_data_to_dataframe(samples: Dict[str, Any], metadata: Dict[str, Dict[
                  values as the dict values
         metadata: Channel metadata returned by myquery.  Keyed on channel names
         enums_as_strings: Should enums be displayed as their string names
+        sig_figs: How many significant figures were requested.  Lower values will result in a lower precision type used.
 
     Returns:
         A pandas DataFrame with the data converted from myquery.  Vector valued responses are converted to the
@@ -90,33 +136,15 @@ def convert_data_to_dataframe(samples: Dict[str, Any], metadata: Dict[str, Dict[
             samples[channel_name] = pd.to_datetime(val)
             continue
 
+        new_type = get_data_types(metadata=metadata[channel_name]["metadata"], enums_as_strings=enums_as_strings,
+                                  sig_figs=sig_figs)
+
         # Leave scalar valued series alone
         if metadata[channel_name]['metadata']['datasize'] == 1:
-            continue
-
-        # Get the EPICS record type
-        rtyp = metadata[channel_name]['metadata']['datatype']
-
-        def _convert_row(row, dtype) -> np.ndarray:
-            """Convert a list of strings to a numpy array of the appropriate type and handle None"""
-            if row is None:
-                out = None
-            else:
-                out = np.array(row, dtype=dtype)
-            return out
-
-        # Since we only have vector valued channels, we need to convert from the str type that myquery supplies
-        if rtyp in ("DBR_DOUBLE", "DBR_FLOAT"):
-            # Cast to float (64-bit is adequate for both)
-            samples[channel_name] = list(map(lambda x: _convert_row(x, float), val))
-        elif rtyp in ("DBR_SHORT", "DBR_LONG"):
-            # Cast to int (64-bit is adequate for both)
-            samples[channel_name] = list(map(lambda x: _convert_row(x, int), val))
-        elif rtyp == "DBR_ENUM" and not enums_as_strings:
-            samples[channel_name] = list(map(lambda x: _convert_row(x, int), val))
+            samples[channel_name] = np.asarray(samples[channel_name], dtype=new_type)
         else:
-            # We will leave them as a list of strings
-            pass
+
+            samples[channel_name] = list(map(lambda x: convert_multivalue_sample(x, new_type), val))
 
     data = pd.DataFrame(samples).set_index("Date", drop=True)
 
@@ -172,3 +200,22 @@ def check_response(r: requests.Response) -> None:
         else:
             msg = r.reason
         raise requests.RequestException(f"Error contacting server. status={r.status_code} details={msg}")
+
+
+def format_index_ns(idx: pd.Index, n_frac: int=9) -> np.array:
+    """Format a datetime index so that it shows the requested number of fractional seconds."""
+    if not 0 <= n_frac <= MAX_FRACTIONAL_SECOND_DIGITS:
+        raise ValueError("n_frac must be 0–9")
+    if idx.dtype != "datetime64[ns]":
+        raise ValueError("index must be datetime64[ns]")
+
+    # whole seconds only
+    secs = pd.Series(idx.strftime("%Y-%m-%d %H:%M:%S"))
+
+    if n_frac == 0:
+        return secs.to_numpy()
+
+    # fractional seconds if requested
+    ns   = pd.Series(idx.to_numpy().view("int64") % 1_000_000_000)
+    frac = ns.astype(str).str.zfill(9)
+    return (secs + "." + frac.str[:n_frac]).to_numpy()

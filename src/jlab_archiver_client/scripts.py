@@ -41,6 +41,7 @@ import json
 from datetime import datetime
 from typing import Optional
 
+
 from jlab_archiver_client.config import config
 from jlab_archiver_client.query import (
     IntervalQuery, MySamplerQuery, MyStatsQuery, PointQuery, ChannelQuery
@@ -50,7 +51,7 @@ from jlab_archiver_client.mysampler import MySampler
 from jlab_archiver_client.mystats import MyStats
 from jlab_archiver_client.point import Point
 from jlab_archiver_client.channel import Channel
-from jlab_archiver_client.utils import json_normalize
+from jlab_archiver_client.utils import json_normalize, format_index_ns
 
 
 def _parse_datetime(dt_str: str) -> datetime:
@@ -241,10 +242,14 @@ def mysampler_main():
     # Optional query parameters
     parser.add_argument('-m', '--deployment', type=str, default='history',
                         help='MYA deployment (default: history)')
-    parser.add_argument('-x', '--sample-strategy', type=str, default=None,
+    parser.add_argument('-x', '--sample-strategy', type=str, default="stream",
                         choices=['n_queries', 'stream'],
                         help='Sampling strategy: n_queries (efficient for many updates per sample) or '
                              'stream (efficient for few updates per sample). None uses myquery default.')
+    parser.add_argument('-f', '--frac-time-digits', type=int, default=0,
+                        help='Fractional seconds digits (default: 6)')
+    parser.add_argument('-v', '--sig-figs', type=int, default=6,
+                        help='Significant figures for values (default: 6)')
 
     # Boolean flags
     parser.add_argument('-d', '--data-updates-only', action='store_true',
@@ -282,6 +287,8 @@ def mysampler_main():
         pvlist=args.channels,
         deployment=args.deployment,
         sample_strategy=args.sample_strategy,
+        frac_time_digits=args.frac_time_digits,
+        sig_figs=args.sig_figs,
         data_updates_only=args.data_updates_only,
         enums_as_strings=args.enums_as_strings,
         unix_timestamps_ms=args.unix_timestamps_ms,
@@ -312,8 +319,8 @@ def mysampler_main():
                 json.dump(output_data, f, indent=2, default=str)
             print(f"Successfully saved results to {args.output}")
         elif args.output.endswith('.csv'):
-            mysampler.data.to_csv(args.output)
-            print(f"Successfully saved results to {args.output}")
+            mysampler.data.index = format_index_ns(mysampler.data.index, args.frac_time_digits)
+            mysampler.data.to_csv(args.output, float_format='%#.' + str(args.sig_figs) + 'g')
         else:
             print("Error: Output file must be .csv or .json", file=sys.stderr)
             sys.exit(1)

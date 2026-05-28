@@ -17,7 +17,7 @@ class TestPointQuery(unittest.TestCase):
         point.run()
         result = point.event
         exp = {'name': 'channel100', 'datatype': 'DBR_DOUBLE', 'datasize': 1, 'datahost': 'mya',
-               'data': {'d': '2018-04-24 11:18:19', 'v': 5.66}}
+               'data': {'d': '2018-04-24 11:18:19.390063311', 'v': 5.66}}
         self.assertDictEqual(exp, result)
 
     def test_get_point_2(self):
@@ -68,6 +68,6 @@ class TestPointQuery(unittest.TestCase):
         result = point.event
 
         exp = {"datatype": "DBR_SHORT", "datasize": 11, "datahost": "mya",
-               "data": {"d": "2018-04-24 11:18:19", "x": True, "t": "UNKNOWN_UNAVAILABILTY"},
+               "data": {"d": "2018-04-24 11:18:19.101788084", "x": True, "t": "UNKNOWN_UNAVAILABILTY"},
                "name": "channel102"}
         self.assertDictEqual(exp, result)

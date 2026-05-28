@@ -175,6 +175,7 @@ class TestInterval(unittest.TestCase):
         res_disconnects = interval.disconnects
         res_metadata = interval.metadata
 
+        # self.save_interval_data("interval_1", res_data, res_disconnects, res_metadata)
         exp_data, exp_disconnects, exp_metadata = self.load_interval_data("interval_1", pv=pv)
         self.check_interval_result(exp_data, exp_disconnects, exp_metadata, res_data, res_disconnects, res_metadata)
 
@@ -223,6 +224,7 @@ class TestInterval(unittest.TestCase):
 
         # We can directly save the data as usual, but pandas saves each row as a string.  Need a little help getting it
         # back.
+        # self.save_interval_data("interval_3", res_data, res_disconnects, res_metadata)
         exp_data, exp_disconnects, exp_metadata = self.load_interval_data("interval_3", pv=pv)
         exp_data = exp_data.apply(lambda x: np.fromstring(x.strip("[]"), sep=" "))
         self.check_interval_result(exp_data, exp_disconnects, exp_metadata, res_data, res_disconnects, res_metadata)
@@ -237,6 +239,7 @@ class TestInterval(unittest.TestCase):
                                             prior_point=True,)
         res_data, res_disconnects, res_metadata = out
 
+        # self.save_interval_data_parallel("interval_parallel_1", res_data, res_disconnects, res_metadata)
         exp_data, exp_disconnects, exp_metadata = self.load_interval_data_parallel("interval_parallel_1")
         self.check_interval_result_parallel(exp_data, exp_disconnects, exp_metadata, res_data, res_disconnects,
                                             res_metadata)
@@ -252,6 +255,7 @@ class TestInterval(unittest.TestCase):
                                             prior_point=True,)
         res_data, res_disconnects, res_metadata = out
 
+        # self.save_interval_data_parallel("interval_parallel_2", res_data, res_disconnects, res_metadata)
         exp_data, exp_disconnects, exp_metadata = self.load_interval_data_parallel("interval_parallel_2")
         exp_data = exp_data.apply(process_vector_series, axis=0)
         self.check_interval_result_parallel(exp_data, exp_disconnects, exp_metadata, res_data, res_disconnects,

@@ -1,10 +1,10 @@
 {
   "channel2": {
     "__type__": "series",
-    "2019-08-12 00:43:56": "CHANNELS_PRIOR_DATA_MOVED_OFFLINE"
+    "2019-08-12 00:43:56.166213098": "CHANNELS_PRIOR_DATA_MOVED_OFFLINE"
   },
   "channel3": {
     "__type__": "series",
-    "2019-08-12 00:00:01": "CHANNELS_PRIOR_DATA_DISCARDED"
+    "2019-08-12 00:00:01.418386347": "CHANNELS_PRIOR_DATA_DISCARDED"
   }
 }

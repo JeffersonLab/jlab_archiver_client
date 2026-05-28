@@ -1,4 +1,4 @@
-r"""Query builder classes for Jefferson Lab Archiver myquery endpoints.
+fr"""Query builder classes for Jefferson Lab Archiver myquery endpoints.
 
 This module provides query builder classes for constructing requests to various
 Jefferson Lab Archiver myquery service endpoints. Each query class encapsulates
@@ -8,6 +8,16 @@ request parameters.
 The query classes serve as parameter containers that are passed to their
 corresponding client classes (MySampler, MyStats, Interval, Point, Channel)
 which execute the queries and process the results.
+
+Many query classes allow the user to specify the timestamp precision and the
+number of significant figures reported for numeric data.  The number of
+significant figures is set to 6, similar to myquery.  The
+timestamp precision by default is set to nanoseconds, but this can be 
+overridden by the user.  Since DataFrame indexes are typically built on the
+timestamp, these should be unique. MYA typically captures event timestamps at
+a precision less than nanoseconds, so this should ensure that timestamps are
+unique.  However, advanced users may have reasons to request a lower precision,
+e.g., lower memory usage.
 
 Key Features:
     * Type-safe query parameter validation
@@ -38,10 +48,17 @@ See Also:
 """
 import warnings
 from datetime import datetime
-from typing import Optional, List, Dict
+from typing import Optional, List, Dict, Any
 
 
-__all__ = ["Query", "IntervalQuery", "MySamplerQuery", "ChannelQuery", "PointQuery", "MyStatsQuery"]
+__all__ = ["Query", "IntervalQuery", "MySamplerQuery", "ChannelQuery", "PointQuery", "MyStatsQuery",
+           "MAX_FRACTIONAL_SECOND_DIGITS", "DEFAULT_SIG_FIGS"]
+
+
+# Max time precision from myquery is nanoseconds or nine decimal places
+MAX_FRACTIONAL_SECOND_DIGITS = 9
+# myquery currently defaults to 6 sig figs.  We define a default here for clarity.
+DEFAULT_SIG_FIGS = 6
 
 
 class Query:
@@ -50,7 +67,7 @@ class Query:
     def __init__(self):
         raise NotImplementedError("Query class is abstract")
 
-    def to_web_params(self):
+    def to_web_params(self) -> Dict[str, Any]:
         raise NotImplementedError("Query class is abstract")
 
 
@@ -61,8 +78,8 @@ class IntervalQuery(Query):
                  bin_limit: Optional[int] = None,
                  sample_type: Optional[str] = None,
                  deployment: Optional[str] = "history",
-                 frac_time_digits: int = 0,
-                 sig_figs: int = 6,
+                 frac_time_digits: Optional[int] = MAX_FRACTIONAL_SECOND_DIGITS,
+                 sig_figs: Optional[int] = DEFAULT_SIG_FIGS,
                  data_updates_only: bool = False,
                  prior_point: bool = False,
                  enums_as_strings: bool = False,
@@ -71,7 +88,7 @@ class IntervalQuery(Query):
                  integrate: bool = False,
                  **kwargs
                  ):
-        """Construct a query to the myquery interval service.
+        f"""Construct a query to the myquery interval service.
 
         Args:
             channel: A list of PV Names to query
@@ -80,7 +97,7 @@ class IntervalQuery(Query):
             deployment: The mya deployment to query
             bin_limit: How many points returned from MYA before sampling kicks in
             sample_type: What sampling algorithm should be used.  [graphical, eventsimple, myget, mysampler]
-            frac_time_digits: How many digits should be displayed for fractional seconds
+            frac_time_digits: How many digits should be displayed for fractional seconds.
             sig_figs: How many significant figures should be reported in the PV values
             data_updates_only: Should the response include updates that only include value changes (not disconnects?)
             prior_point: Should the query use the most recent update prior to the start to give a value at the start of
@@ -108,7 +125,7 @@ class IntervalQuery(Query):
         self.integrate = integrate
         self.extra_opts = kwargs
 
-    def to_web_params(self):
+    def to_web_params(self) -> Dict[str, Any]:
         """
         Convert the query to web parameters.
 
@@ -118,13 +135,16 @@ class IntervalQuery(Query):
         https://epicsweb.jlab.org/myquery/interval?c=R1M1GMES&b=2023-05-09&e=2023-05-09+15%3A59%3A00&l=&t=graphical&m=history&f=0&v=6&d=on&p=on&s=on&u=on&a=on&i=on
         """
         ts_fmt = "%Y-%m-%dT%H:%M:%S"
-        out = {'c': self.channel,
+        out: Dict[str, Any] = {'c': self.channel,
                'b': self.begin.strftime(ts_fmt),
                'e': self.end.strftime(ts_fmt),
                'm': self.deployment,
-               'f': self.frac_time_digits,
-               'v': self.sig_figs,
-               }
+        }
+
+        if self.frac_time_digits is not None:
+            out['f'] = self.frac_time_digits
+        if self.sig_figs is not None:
+            out['v'] = int(self.sig_figs)
 
         # It looks like the form keeps the 'l' param with "" passed if not specified
         if self.bin_limit is None:
@@ -164,11 +184,17 @@ class MySamplerQuery(Query):
 
     # noinspection PyMissingConstructor
     def __init__(self, start: datetime, interval: int, num_samples: int, pvlist: List[str],
-                 deployment: Optional[str] = "history", sample_strategy: Optional[str] = None,
-                 frac_time_digits: Optional[int] = None, sig_figs: Optional[int] = None,
-                 data_updates_only: bool=False, enums_as_strings: bool=False,
-                 unix_timestamps_ms: bool=False, adjust_time_to_server_offset: bool=False, **kwargs):
-        """Construct an instance of MySamplerQuery.
+                 deployment: Optional[str] = "history",
+                 sample_strategy: Optional[str] = None,
+                 frac_time_digits: Optional[int] = MAX_FRACTIONAL_SECOND_DIGITS,
+                 sig_figs: Optional[int] = DEFAULT_SIG_FIGS,
+                 data_updates_only: bool = False,
+                 enums_as_strings: bool = False,
+                 unix_timestamps_ms: bool = False,
+                 adjust_time_to_server_offset: bool = False,
+                 **kwargs
+                 ):
+        f"""Construct an instance of MySamplerQuery.
 
         Args:
             start: The start date of the query.
@@ -184,10 +210,10 @@ class MySamplerQuery(Query):
                              efficient for queries with a small number of update events per sample.  Developer testing
                              indicates the threshold for switching strategies to maintain the best response time is
                              somewhere around 5,000 update events per sample.
-            frac_time_digits: How many digits should a fractional second contain
-            sig_figs: How many significant figures should the data values should contain?
+            frac_time_digits: How many digits should be displayed for fractional seconds.
+            sig_figs: How many significant figures should be reported in the PV values.  If None, use myquery default.
             data_updates_only: Should the response ignore events such as "NETWORK_DISCONNECT" and assume the previous
-                                value is still in effect  (Default: False)
+                               value is still in effect  (Default: False)
             enums_as_strings: Should enum PV values be returned as their names instead of ints
             unix_timestamps_ms: Should timestamps be returned as millis since unix epoch
             adjust_time_to_server_offset: Should the timestamp be localized to the myquery server
@@ -213,9 +239,9 @@ class MySamplerQuery(Query):
             if self.sample_strategy not in ("n_queries", "stream"):
                 raise ValueError("sample_strategy must be None, 'n_queries', or 'stream'")
 
-    def to_web_params(self) -> Dict[str, str]:
+    def to_web_params(self) -> Dict[str, Any]:
         """Convert the objects command line parameters to their web counterparts"""
-        out = {'c': ",".join(self.pvlist),
+        out: Dict[str, Any] = {'c': ",".join(self.pvlist),
                'b': self.start.replace(" ", "T"),
                'n': self.num_samples,
                'm': self.deployment,
@@ -229,10 +255,9 @@ class MySamplerQuery(Query):
                 out['x'] = "s"
 
         if self.frac_time_digits is not None:
-            out['f'] = int(self.frac_time_digits)
+            out['f'] = self.frac_time_digits
         if self.sig_figs is not None:
             out['v'] = int(self.sig_figs)
-
 
         # API takes presence of some params to mean == true, and the web form uses 'on' instead of a boolean.
         if self.data_updates_only:
@@ -271,9 +296,9 @@ class ChannelQuery(Query):
         self.deployment = deployment
         self.extra_opts = kwargs
 
-    def to_web_params(self) -> Dict[str, str]:
+    def to_web_params(self) -> Dict[str, Any]:
         """Convert the objects command line parameters to their web counterparts"""
-        out = {'q': self.pattern,
+        out : Dict[str, Any] = {'q': self.pattern,
                'l': self.limit,
                'o': self.offset,
                'm': self.deployment,
@@ -291,8 +316,8 @@ class PointQuery(Query):
     # noinspection PyMissingConstructor
     def __init__(self, channel: str, time: datetime,
                  deployment: Optional[str] = "history",
-                 frac_time_digits: int = 0,
-                 sig_figs: int = 6,
+                 frac_time_digits: Optional[int] = MAX_FRACTIONAL_SECOND_DIGITS,
+                 sig_figs: Optional[int] = DEFAULT_SIG_FIGS,
                  data_updates_only: bool = False,
                  forward_time_search: bool = False,
                  exclude_given_time: bool = False,
@@ -301,14 +326,14 @@ class PointQuery(Query):
                  adjust_time_to_server_offset: bool = False,
                  **kwargs
                  ):
-        """Construct a query to the myquery interval service.
+        f"""Construct a query to the myquery interval service.
 
         Args:
             channel: A list of PV Names to query
             time: The start time of the query
             deployment: The mya deployment to query
-            frac_time_digits: How many digits should be displayed for fractional seconds
-            sig_figs: How many significant figures should be reported in the PV values
+            frac_time_digits: How many digits should be displayed for fractional seconds.
+            sig_figs: How many significant figures should be reported in the PV values.  If None, use myquery default.
             data_updates_only: Should the response include updates that only include value changes (not disconnects)
             forward_time_search: Look forward in time from the given time for the next event (if True)
             exclude_given_time:  Don't include the given time in the search space for the next event (if True)
@@ -332,7 +357,7 @@ class PointQuery(Query):
         self.adjust_time_to_server_offset = adjust_time_to_server_offset
         self.extra_opts = kwargs
 
-    def to_web_params(self):
+    def to_web_params(self) -> Dict[str, Any]:
         """
         Convert the query to web parameters.
 
@@ -342,12 +367,15 @@ class PointQuery(Query):
         https://epicsweb.jlab.org/myquery/point?c=channel100&t=2018-04-24+12%3A00%3A00&m=docker&f=&v=&w=on&x=on
         """
         ts_fmt = "%Y-%m-%dT%H:%M:%S"
-        out = {'c': self.channel,
+        out: Dict[str, Any] = {'c': self.channel,
                't': self.time.strftime(ts_fmt),
                'm': self.deployment,
-               'f': self.frac_time_digits,
-               'v': self.sig_figs,
                }
+
+        if self.frac_time_digits is not None:
+            out['f'] = self.frac_time_digits
+        if self.sig_figs is not None:
+            out['v'] = int(self.sig_figs)
 
         # API takes presence of some params to mean == true, and the web form uses 'on' instead of a boolean.
         if self.data_updates_only:
@@ -381,14 +409,14 @@ class MyStatsQuery(Query):
                  end: datetime,
                  num_bins: int = 1,
                  deployment: Optional[str] = "history",
-                 frac_time_digits: int = 0,
-                 sig_figs: int = 6,
-                 data_updates_only: bool=False,
-                 enums_as_strings: bool=False,
-                 unix_timestamps_ms: bool=False,
-                 adjust_time_to_server_offset: bool=False,
+                 frac_time_digits: Optional[int] = MAX_FRACTIONAL_SECOND_DIGITS,
+                 sig_figs: Optional[int] = DEFAULT_SIG_FIGS,
+                 data_updates_only: bool = False,
+                 enums_as_strings: bool = False,
+                 unix_timestamps_ms: bool = False,
+                 adjust_time_to_server_offset: bool = False,
                  **kwargs):
-        """Construct an instance of MyStatsQuery.
+        f"""Construct an instance of MyStatsQuery.
 
         Args:
             pvlist: The list of PVs to collect on
@@ -396,6 +424,8 @@ class MyStatsQuery(Query):
             end: The end date/time of the query.
             num_bins: The number of bins to compute statistics over
             deployment: The mya deployment to use.  (Default:"history", unlike the myquery endpoint).
+            frac_time_digits: How many digits should be displayed for fractional seconds.  If None, use myquery default.
+            sig_figs: How many significant figures should be reported in the PV values.  If None, use myquery default.
             data_updates_only: Should the response ignore events such as "NETWORK_DISCONNECT" and assume the previous
                                 value is still in effect  (Default: False)
             enums_as_strings: Should enum PV values be returned as their names instead of ints
@@ -417,16 +447,19 @@ class MyStatsQuery(Query):
         self.adjust_time_to_server_offset = adjust_time_to_server_offset
         self.extra_opts = kwargs
 
-    def to_web_params(self) -> Dict[str, str]:
+    def to_web_params(self) -> Dict[str, Any]:
         """Convert the objects command line parameters to their web counterparts"""
-        out = {'c': ",".join(self.pvlist),
+        out: Dict[str, Any] = {'c': ",".join(self.pvlist),
                'b': self.start.isoformat(),
                'e': self.end.isoformat(),
                'n': self.num_bins,
                'm': self.deployment,
-               'f': self.frac_time_digits,
-               'v': self.sig_figs,
                }
+
+        if self.frac_time_digits is not None:
+            out['f'] = self.frac_time_digits
+        if self.sig_figs is not None:
+            out['v'] = int(self.sig_figs)
 
         # API takes presence of some params to mean == true, and the web form uses 'on' instead of a boolean.
         if self.data_updates_only:

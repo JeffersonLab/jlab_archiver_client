@@ -69,7 +69,7 @@ class TestMySampler(unittest.TestCase):
     def save_mysampler_data(ident: str, data: pd.DataFrame, disconnects: Dict[str, pd.Series],
                             metadata: Dict[str, object]):
         """Convenient way to save test case data for mysampler."""
-        data.to_csv(f"{DIR}/data/myquery_{ident}-data.csv")
+        data.to_csv(f"{DIR}/data/myquery_{ident}-data.csv", date_format="%Y-%m-%d %H:%M:%S.%f")
 
         with open(f"{DIR}/data/myquery_{ident}-disconnects.json", "w") as f:
             # noinspection PyTypeChecker
@@ -104,6 +104,7 @@ class TestMySampler(unittest.TestCase):
         res_disconnects = mysampler.disconnects
         res_metadata = mysampler.metadata
 
+        # self.save_mysampler_data("mysampler_1", res_data, res_disconnects, res_metadata)
         exp_data, exp_disconnects, exp_metadata = self.load_mysampler_data("mysampler_1")
         self.check_mysampler_result(exp_data, exp_disconnects, exp_metadata, res_data, res_disconnects,
                                     res_metadata)
@@ -126,6 +127,7 @@ class TestMySampler(unittest.TestCase):
         res_disconnects = mysampler.disconnects
         res_metadata = mysampler.metadata
 
+        # self.save_mysampler_data("mysampler_2", res_data, res_disconnects, res_metadata)
         exp_data, exp_disconnects, exp_metadata = self.load_mysampler_data("mysampler_2")
         self.check_mysampler_result(exp_data, exp_disconnects, exp_metadata, res_data, res_disconnects,
                                res_metadata)
@@ -148,6 +150,7 @@ class TestMySampler(unittest.TestCase):
         res_disconnects = mysampler.disconnects
         res_metadata = mysampler.metadata
 
+        # self.save_mysampler_data("mysampler_3", res_data, res_disconnects, res_metadata)
         exp_data, exp_disconnects, exp_metadata = self.load_mysampler_data("mysampler_3")
         exp_data['channel2'] = exp_data['channel2'].astype("Int16")
 
@@ -173,6 +176,7 @@ class TestMySampler(unittest.TestCase):
         res_disconnects = mysampler.disconnects
         res_metadata = mysampler.metadata
 
+        # self.save_mysampler_data("mysampler_4", res_data, res_disconnects, res_metadata)
         exp_data, exp_disconnects, exp_metadata = self.load_mysampler_data("mysampler_4")
         self.check_mysampler_result(exp_data, exp_disconnects, exp_metadata, res_data, res_disconnects,
                                res_metadata)
@@ -222,6 +226,7 @@ class TestMySampler(unittest.TestCase):
         res_disconnects = mysampler.disconnects
         res_metadata = mysampler.metadata
 
+        # self.save_mysampler_data("mysampler_history_origin", res_data, res_disconnects, res_metadata)
         exp_data, exp_disconnects, exp_metadata = self.load_mysampler_data("mysampler_history_origin")
         exp_data['channel2'] = exp_data['channel2'].astype("Int16")
 

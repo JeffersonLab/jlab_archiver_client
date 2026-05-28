@@ -185,7 +185,7 @@ class MySamplerQuery(Query):
     # noinspection PyMissingConstructor
     def __init__(self, start: datetime, interval: int, num_samples: int, pvlist: List[str],
                  deployment: Optional[str] = "history",
-                 sample_strategy: Optional[str] = None,
+                 sample_strategy: Optional[str] = "stream",
                  frac_time_digits: Optional[int] = MAX_FRACTIONAL_SECOND_DIGITS,
                  sig_figs: Optional[int] = DEFAULT_SIG_FIGS,
                  data_updates_only: bool = False,
@@ -202,7 +202,7 @@ class MySamplerQuery(Query):
             num_samples: The number of samples to take
             pvlist: The list of PVs to collect on
             deployment: The mya deployment to use.  (Default:"history", unlike the myquery endpoint).
-            sample_strategy: The sampling strategy to use.  Options are None (default), 'n_queries', 'stream'.  If None,
+            sample_strategy: The sampling strategy to use.  Options are None, 'n_queries', 'stream' (default).  If None,
                              then default sampling strategy is determined by the myquery server. 'n_queries' queries the
                              database once for each data point returned.  'stream' queries the database once per PV and
                              constructs the returned data from the stream.  'n_queries' is generally more efficient for

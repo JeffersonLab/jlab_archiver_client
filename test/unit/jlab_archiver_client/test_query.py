@@ -7,7 +7,7 @@ from jlab_archiver_client.query import (
     MySamplerQuery,
     ChannelQuery,
     PointQuery,
-    MyStatsQuery
+    MyStatsQuery, MAX_FRACTIONAL_SECOND_DIGITS, DEFAULT_SIG_FIGS
 )
 
 
@@ -28,8 +28,8 @@ class TestIntervalQuery(unittest.TestCase):
         self.assertIsNone(query.bin_limit)
         self.assertIsNone(query.sample_type)
         self.assertEqual(query.deployment, "history")
-        self.assertEqual(query.frac_time_digits, 0)
-        self.assertEqual(query.sig_figs, 6)
+        self.assertEqual(query.frac_time_digits, MAX_FRACTIONAL_SECOND_DIGITS)
+        self.assertEqual(query.sig_figs, DEFAULT_SIG_FIGS)
         self.assertFalse(query.data_updates_only)
         self.assertFalse(query.prior_point)
         self.assertFalse(query.enums_as_strings)
@@ -113,8 +113,8 @@ class TestIntervalQuery(unittest.TestCase):
         self.assertEqual(params['b'], "2023-05-09T00:00:00")
         self.assertEqual(params['e'], "2023-05-09T15:59:00")
         self.assertEqual(params['m'], "history")
-        self.assertEqual(params['f'], 0)
-        self.assertEqual(params['v'], 6)
+        self.assertEqual(params['f'], MAX_FRACTIONAL_SECOND_DIGITS)
+        self.assertEqual(params['v'], DEFAULT_SIG_FIGS)
         self.assertEqual(params['l'], "")
         self.assertNotIn('t', params)
         self.assertNotIn('d', params)
@@ -474,7 +474,7 @@ class TestPointQuery(unittest.TestCase):
         self.assertEqual(query.channel, channel)
         self.assertEqual(query.time, time)
         self.assertEqual(query.deployment, "history")
-        self.assertEqual(query.frac_time_digits, 0)
+        self.assertEqual(query.frac_time_digits, MAX_FRACTIONAL_SECOND_DIGITS)
         self.assertEqual(query.sig_figs, 6)
         self.assertFalse(query.data_updates_only)
         self.assertFalse(query.forward_time_search)
@@ -542,8 +542,8 @@ class TestPointQuery(unittest.TestCase):
         self.assertEqual(params['c'], channel)
         self.assertEqual(params['t'], "2018-04-24T12:00:00")
         self.assertEqual(params['m'], "history")
-        self.assertEqual(params['f'], 0)
-        self.assertEqual(params['v'], 6)
+        self.assertEqual(params['f'], MAX_FRACTIONAL_SECOND_DIGITS)
+        self.assertEqual(params['v'], DEFAULT_SIG_FIGS)
         self.assertNotIn('d', params)
         self.assertNotIn('w', params)
         self.assertNotIn('x', params)
@@ -607,8 +607,8 @@ class TestMyStatsQuery(unittest.TestCase):
         self.assertEqual(query.end, end)
         self.assertEqual(query.num_bins, 1)
         self.assertEqual(query.deployment, "history")
-        self.assertEqual(query.frac_time_digits, 0)
-        self.assertEqual(query.sig_figs, 6)
+        self.assertEqual(query.frac_time_digits, MAX_FRACTIONAL_SECOND_DIGITS)
+        self.assertEqual(query.sig_figs, DEFAULT_SIG_FIGS)
         self.assertFalse(query.data_updates_only)
         self.assertFalse(query.enums_as_strings)
         self.assertFalse(query.unix_timestamps_ms)
@@ -682,8 +682,8 @@ class TestMyStatsQuery(unittest.TestCase):
         self.assertEqual(params['e'], "2023-05-09T23:59:59")
         self.assertEqual(params['n'], 1)
         self.assertEqual(params['m'], "history")
-        self.assertEqual(params['f'], 0)
-        self.assertEqual(params['v'], 6)
+        self.assertEqual(params['f'], MAX_FRACTIONAL_SECOND_DIGITS)
+        self.assertEqual(params['v'], DEFAULT_SIG_FIGS)
         self.assertNotIn('d', params)
         self.assertNotIn('u', params)
         self.assertNotIn('a', params)

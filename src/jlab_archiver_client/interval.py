@@ -108,7 +108,7 @@ class Interval:
 
     Values of the PV updates are stored as a pandas Series object in the data
     field.  Non-update events are stored as None to allow better automatic type
-    detection by pandas.  Diconnect events are stored as a pandas Series in the
+    detection by pandas.  Disconnect events are stored as a pandas Series in the
     disconnects field.  The disconnects field contains both events where no data
     is available (e.g., NETWORK_DISCONNECTION) and special events that do have
     data (e.g., CHANNELS_PRIOR_DATA_DISCARDED).  Other response metadata is
@@ -204,7 +204,7 @@ class Interval:
             MyqueryException when a problem with one or more queries has occurred
 
         Returns:
-            A Pandas DataFrame of the combined PVs, a dictionry of per-channel disconnect series (keyed on channels),
+            A Pandas DataFrame of the combined PVs, a dictionary of per-channel disconnect series (keyed on channels),
             and a dictionary of per-channel metadata (keyed on channel)
         """
         if "channel" in kwargs.keys():

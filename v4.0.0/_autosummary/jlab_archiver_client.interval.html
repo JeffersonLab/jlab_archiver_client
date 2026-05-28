@@ -1,0 +1,225 @@
+# docsrc/source/_templates/layout.html
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>jlab_archiver_client.interval &mdash; jlab_archiver_client 1.1.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=fc837d61"></script>
+      <script src="../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="&lt;no title&gt;" href="jlab_archiver_client.interval.Interval.html" />
+    <link rel="prev" title="jlab_archiver_client.exceptions.MyqueryException" href="jlab_archiver_client.exceptions.MyqueryException.html" />
+<!--suppress ALL -->
+<link href="../_static/rtd_custom.css" rel="stylesheet" type="text/css">
+
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            jlab_archiver_client
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="jlab_archiver_client.html">jlab_archiver_client</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="jlab_archiver_client.channel.html">jlab_archiver_client.channel</a></li>
+<li class="toctree-l2"><a class="reference internal" href="jlab_archiver_client.config.html">jlab_archiver_client.config</a></li>
+<li class="toctree-l2"><a class="reference internal" href="jlab_archiver_client.exceptions.html">jlab_archiver_client.exceptions</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">jlab_archiver_client.interval</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="jlab_archiver_client.interval.Interval.html"><code class="docutils literal notranslate"><span class="pre">Interval</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="jlab_archiver_client.mysampler.html">jlab_archiver_client.mysampler</a></li>
+<li class="toctree-l2"><a class="reference internal" href="jlab_archiver_client.mystats.html">jlab_archiver_client.mystats</a></li>
+<li class="toctree-l2"><a class="reference internal" href="jlab_archiver_client.point.html">jlab_archiver_client.point</a></li>
+<li class="toctree-l2"><a class="reference internal" href="jlab_archiver_client.query.html">jlab_archiver_client.query</a></li>
+<li class="toctree-l2"><a class="reference internal" href="jlab_archiver_client.scripts.html">jlab_archiver_client.scripts</a></li>
+<li class="toctree-l2"><a class="reference internal" href="jlab_archiver_client.utils.html">jlab_archiver_client.utils</a></li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">jlab_archiver_client</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="jlab_archiver_client.html">jlab_archiver_client</a></li>
+      <li class="breadcrumb-item active">jlab_archiver_client.interval</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/_autosummary/jlab_archiver_client.interval.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="module-jlab_archiver_client.interval">
+<span id="jlab-archiver-client-interval"></span><h1>jlab_archiver_client.interval<a class="headerlink" href="#module-jlab_archiver_client.interval" title="Link to this heading"></a></h1>
+<p>Query and retrieve historical EPICS PV data from the MYA archiver using the interval endpoint.</p>
+<p>This module provides the Interval class for querying the MYA archiver’s interval endpoint,
+which retrieves all archived events for specified PVs over a given time range. The module
+supports both single-channel queries and parallel multi-channel queries, returning data as
+pandas Series or DataFrames with datetime indices.</p>
+<p>The interval endpoint returns all archived events (value updates, disconnections, etc.) within
+the specified time range. Non-update events (like network disconnections) are handled separately
+to maintain data integrity and type consistency. The disconnects field contains both events where
+no data is available (e.g., NETWORK_DISCONNECTION) and special events that do have data
+(e.g., CHANNELS_PRIOR_DATA_DISCARDED).</p>
+<p class="rubric">Examples</p>
+<p>These examples are designed to work with the container environment in the development repo.
+First set the config to use the myquery container.</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">jlab_archiver_client.config</span><span class="w"> </span><span class="kn">import</span> <span class="n">config</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">config</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">myquery_server</span> <span class="o">=</span> <span class="s2">&quot;localhost:8080&quot;</span><span class="p">,</span> <span class="n">protocol</span> <span class="o">=</span> <span class="s2">&quot;http&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Query a single channel and access the data:</p>
+<dl>
+<dt>Example::</dt><dd><div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">datetime</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">jlab_archiver_client</span><span class="w"> </span><span class="kn">import</span> <span class="n">IntervalQuery</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">jlab_archiver_client</span><span class="w"> </span><span class="kn">import</span> <span class="n">Interval</span>
+<span class="gp">&gt;&gt;&gt;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1"># Create a query for a single channel</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">query</span> <span class="o">=</span> <span class="n">IntervalQuery</span><span class="p">(</span>
+<span class="gp">... </span>            <span class="n">channel</span><span class="o">=</span><span class="s2">&quot;channel100&quot;</span><span class="p">,</span>
+<span class="gp">... </span>            <span class="n">begin</span><span class="o">=</span><span class="n">datetime</span><span class="p">(</span><span class="mi">2018</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">24</span><span class="p">),</span>
+<span class="gp">... </span>            <span class="n">end</span><span class="o">=</span><span class="n">datetime</span><span class="p">(</span><span class="mi">2018</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span>
+<span class="gp">... </span>            <span class="n">deployment</span><span class="o">=</span><span class="s2">&quot;docker&quot;</span>
+<span class="gp">... </span>        <span class="p">)</span>
+<span class="gp">&gt;&gt;&gt;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1"># Execute the query</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">interval</span> <span class="o">=</span> <span class="n">Interval</span><span class="p">(</span><span class="n">query</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">interval</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1"># Access the data as a pandas Series with datetime index</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">interval</span><span class="o">.</span><span class="n">data</span><span class="p">)</span>
+<span class="go">2018-04-24 06:25:01    0.000</span>
+<span class="go">2018-04-24 06:25:05    5.911</span>
+<span class="go">2018-04-24 11:18:19    5.660</span>
+<span class="go">2018-04-24 12:19:44      NaN</span>
+<span class="go">2018-04-24 12:31:11    5.657</span>
+<span class="go">2018-04-25 02:39:29    0.000</span>
+<span class="go">2018-04-25 02:39:34    5.657</span>
+<span class="go">2018-04-26 10:31:39    0.000</span>
+<span class="go">2018-04-26 10:31:42    0.031</span>
+<span class="go">2018-04-26 10:31:43    2.466</span>
+<span class="go">2018-04-26 10:31:44    5.657</span>
+<span class="go">2018-04-27 14:29:41    0.000</span>
+<span class="go">2018-04-27 14:29:45    1.418</span>
+<span class="go">2018-04-27 14:29:46    5.657</span>
+<span class="go">2018-04-29 01:52:04    0.000</span>
+<span class="go">2018-04-29 01:52:08    5.657</span>
+<span class="go">2018-04-30 10:15:21    0.000</span>
+<span class="go">2018-04-30 10:15:26    5.658</span>
+<span class="go">Name: channel100, dtype: float64</span>
+<span class="gp">&gt;&gt;&gt;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1"># Access disconnect events separately</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">interval</span><span class="o">.</span><span class="n">disconnects</span><span class="p">)</span>
+<span class="go">2018-04-24 12:19:44    NETWORK_DISCONNECTION</span>
+<span class="go">Name: channel100, dtype: object</span>
+<span class="gp">&gt;&gt;&gt;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1"># Access metadata about the channel</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">interval</span><span class="o">.</span><span class="n">metadata</span><span class="p">)</span>
+<span class="go">{&#39;datatype&#39;: &#39;DBR_DOUBLE&#39;, &#39;datasize&#39;: 1, &#39;datahost&#39;: &#39;mya&#39;, &#39;ioc&#39;: None, &#39;active&#39;: True, &#39;sampled&#39;: False, &#39;returnCount&#39;: 18}</span>
+</pre></div>
+</div>
+</dd>
+</dl>
+<p>Query multiple channels in parallel and get a combined DataFrame:</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">datetime</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">jlab_archiver_client.interval</span><span class="w"> </span><span class="kn">import</span> <span class="n">Interval</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">out</span> <span class="o">=</span> <span class="n">Interval</span><span class="o">.</span><span class="n">run_parallel</span><span class="p">(</span><span class="n">pvlist</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;channel2&quot;</span><span class="p">,</span> <span class="s2">&quot;channel3&quot;</span><span class="p">],</span>
+<span class="go">                    begin=datetime.strptime(&quot;2019-08-12 00:00:00&quot;, &quot;%Y-%m-%d %H:%M:%S&quot;),</span>
+<span class="go">                    end=datetime.strptime(&quot;2019-08-12 01:20:45.002&quot;,</span>
+<span class="go">                                          &quot;%Y-%m-%d %H:%M:%S.%f&quot;),</span>
+<span class="go">                    deployment=&quot;docker&quot;,</span>
+<span class="go">                    prior_point=True,</span>
+<span class="go">                    )</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">data</span><span class="p">,</span> <span class="n">disconnects</span><span class="p">,</span> <span class="n">metadata</span> <span class="o">=</span> <span class="n">out</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">data</span><span class="o">.</span><span class="n">head</span><span class="p">()</span>
+<span class="go">                     channel2                                           channel3</span>
+<span class="go">2019-08-12 00:00:01       NaN  [1565580000.0, 1565580000.0, 1565580000.0, 156...</span>
+<span class="go">2019-08-12 00:43:56       0.0  [1565580000.0, 1565580000.0, 1565580000.0, 156...</span>
+<span class="go">2019-08-12 00:44:11       3.0  [1565580000.0, 1565580000.0, 1565580000.0, 156...</span>
+<span class="go">2019-08-12 01:00:01       3.0  [1565590000.0, 1565580000.0, 1565580000.0, 156...</span>
+<span class="go">2019-08-12 01:14:06       0.0  [1565590000.0, 1565580000.0, 1565580000.0, 156...</span>
+</pre></div>
+</div>
+<p class="rubric">Classes</p>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="jlab_archiver_client.interval.Interval.html#jlab_archiver_client.interval.Interval" title="jlab_archiver_client.interval.Interval"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Interval</span></code></a>(query[, url])</p></td>
+<td><p>A class for running calls to myquery's interval endpoint.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="jlab_archiver_client.exceptions.MyqueryException.html" class="btn btn-neutral float-left" title="jlab_archiver_client.exceptions.MyqueryException" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="jlab_archiver_client.interval.Interval.html" class="btn btn-neutral float-right" title="&lt;no title&gt;" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright .</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

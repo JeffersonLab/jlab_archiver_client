@@ -1,0 +1,193 @@
+# docsrc/source/_templates/layout.html
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>&lt;no title&gt; &mdash; jlab_archiver_client 1.1.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=fc837d61"></script>
+      <script src="../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="&lt;no title&gt;" href="jlab_archiver_client.query.PointQuery.html" />
+    <link rel="prev" title="&lt;no title&gt;" href="jlab_archiver_client.query.MySamplerQuery.html" />
+<!--suppress ALL -->
+<link href="../_static/rtd_custom.css" rel="stylesheet" type="text/css">
+
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            jlab_archiver_client
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="jlab_archiver_client.html">jlab_archiver_client</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="jlab_archiver_client.channel.html">jlab_archiver_client.channel</a></li>
+<li class="toctree-l2"><a class="reference internal" href="jlab_archiver_client.config.html">jlab_archiver_client.config</a></li>
+<li class="toctree-l2"><a class="reference internal" href="jlab_archiver_client.exceptions.html">jlab_archiver_client.exceptions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="jlab_archiver_client.interval.html">jlab_archiver_client.interval</a></li>
+<li class="toctree-l2"><a class="reference internal" href="jlab_archiver_client.mysampler.html">jlab_archiver_client.mysampler</a></li>
+<li class="toctree-l2"><a class="reference internal" href="jlab_archiver_client.mystats.html">jlab_archiver_client.mystats</a></li>
+<li class="toctree-l2"><a class="reference internal" href="jlab_archiver_client.point.html">jlab_archiver_client.point</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="jlab_archiver_client.query.html">jlab_archiver_client.query</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="jlab_archiver_client.query.ChannelQuery.html"><code class="docutils literal notranslate"><span class="pre">ChannelQuery</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="jlab_archiver_client.query.IntervalQuery.html"><code class="docutils literal notranslate"><span class="pre">IntervalQuery</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="jlab_archiver_client.query.MySamplerQuery.html"><code class="docutils literal notranslate"><span class="pre">MySamplerQuery</span></code></a></li>
+<li class="toctree-l3 current"><a class="current reference internal" href="#"><code class="docutils literal notranslate"><span class="pre">MyStatsQuery</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#jlab_archiver_client.query.MyStatsQuery.__init__"><code class="docutils literal notranslate"><span class="pre">MyStatsQuery.__init__()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#jlab_archiver_client.query.MyStatsQuery.to_web_params"><code class="docutils literal notranslate"><span class="pre">MyStatsQuery.to_web_params()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="jlab_archiver_client.query.PointQuery.html"><code class="docutils literal notranslate"><span class="pre">PointQuery</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="jlab_archiver_client.query.Query.html"><code class="docutils literal notranslate"><span class="pre">Query</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="jlab_archiver_client.scripts.html">jlab_archiver_client.scripts</a></li>
+<li class="toctree-l2"><a class="reference internal" href="jlab_archiver_client.utils.html">jlab_archiver_client.utils</a></li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">jlab_archiver_client</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="jlab_archiver_client.html">jlab_archiver_client</a></li>
+          <li class="breadcrumb-item"><a href="jlab_archiver_client.query.html">jlab_archiver_client.query</a></li>
+      <li class="breadcrumb-item active">&lt;no title&gt;</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/_autosummary/jlab_archiver_client.query.MyStatsQuery.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <p># docsrc/source/_templates/custom-class-template.rst
+jlab_archiver_client.query.MyStatsQuery
+=========================================</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="jlab_archiver_client.query.MyStatsQuery">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">jlab_archiver_client.query.</span></span><span class="sig-name descname"><span class="pre">MyStatsQuery</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">pvlist</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">start</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">end</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_bins</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">deployment</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'history'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">frac_time_digits</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">9</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sig_figs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">6</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data_updates_only</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">enums_as_strings</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">unix_timestamps_ms</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">adjust_time_to_server_offset</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/jlab_archiver_client/query.html#MyStatsQuery"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#jlab_archiver_client.query.MyStatsQuery" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="jlab_archiver_client.query.Query.html#jlab_archiver_client.query.Query" title="jlab_archiver_client.query.Query"><code class="xref py py-class docutils literal notranslate"><span class="pre">Query</span></code></a></p>
+<p>A class for containing the arguments needed by mystats endpoint.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="jlab_archiver_client.query.MyStatsQuery.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">pvlist</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">start</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">end</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_bins</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">deployment</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'history'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">frac_time_digits</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">9</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sig_figs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">6</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data_updates_only</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">enums_as_strings</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">unix_timestamps_ms</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">adjust_time_to_server_offset</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/jlab_archiver_client/query.html#MyStatsQuery.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#jlab_archiver_client.query.MyStatsQuery.__init__" title="Link to this definition"></a></dt>
+<dd><p>Construct an instance of MyStatsQuery.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>pvlist</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]</span>) – The list of PVs to collect on</p></li>
+<li><p><strong>start</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">datetime</span></code></span>) – The start date/time of the query.</p></li>
+<li><p><strong>end</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">datetime</span></code></span>) – The end date/time of the query.</p></li>
+<li><p><strong>num_bins</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></span>) – The number of bins to compute statistics over</p></li>
+<li><p><strong>deployment</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]</span>) – The mya deployment to use.  (Default:”history”, unlike the myquery endpoint).</p></li>
+<li><p><strong>frac_time_digits</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>]</span>) – How many digits should be displayed for fractional seconds.  If None, use myquery default.</p></li>
+<li><p><strong>sig_figs</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>]</span>) – How many significant figures should be reported in the PV values.  If None, use myquery default.</p></li>
+<li><p><strong>data_updates_only</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></span>) – Should the response ignore events such as “NETWORK_DISCONNECT” and assume the previous
+value is still in effect  (Default: False)</p></li>
+<li><p><strong>enums_as_strings</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></span>) – Should enum PV values be returned as their names instead of ints</p></li>
+<li><p><strong>unix_timestamps_ms</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></span>) – Should timestamps be returned as millis since unix epoch</p></li>
+<li><p><strong>adjust_time_to_server_offset</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></span>) – Should the timestamp be localized to the myquery server</p></li>
+<li><p><strong>kwargs</strong> – Extra options to pass to the mysampler endpoint.  Helps to future-proof, produces a warning to
+avoid accidental use.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<p class="rubric">Methods</p>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#jlab_archiver_client.query.MyStatsQuery.__init__" title="jlab_archiver_client.query.MyStatsQuery.__init__"><code class="xref py py-obj docutils literal notranslate"><span class="pre">__init__</span></code></a>(pvlist, start, end[, num_bins, ...])</p></td>
+<td><p>Construct an instance of MyStatsQuery.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#jlab_archiver_client.query.MyStatsQuery.to_web_params" title="jlab_archiver_client.query.MyStatsQuery.to_web_params"><code class="xref py py-obj docutils literal notranslate"><span class="pre">to_web_params</span></code></a>()</p></td>
+<td><p>Convert the objects command line parameters to their web counterparts</p></td>
+</tr>
+</tbody>
+</table>
+<dl class="py method">
+<dt class="sig sig-object py" id="jlab_archiver_client.query.MyStatsQuery.to_web_params">
+<span class="sig-name descname"><span class="pre">to_web_params</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/jlab_archiver_client/query.html#MyStatsQuery.to_web_params"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#jlab_archiver_client.query.MyStatsQuery.to_web_params" title="Link to this definition"></a></dt>
+<dd><p>Convert the objects command line parameters to their web counterparts</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">Dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-data docutils literal notranslate"><span class="pre">Any</span></code>]</span></p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="jlab_archiver_client.query.MySamplerQuery.html" class="btn btn-neutral float-left" title="&lt;no title&gt;" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="jlab_archiver_client.query.PointQuery.html" class="btn btn-neutral float-right" title="&lt;no title&gt;" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright .</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

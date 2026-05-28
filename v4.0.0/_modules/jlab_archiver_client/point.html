@@ -1,0 +1,207 @@
+# docsrc/source/_templates/layout.html
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>jlab_archiver_client.point &mdash; jlab_archiver_client 1.1.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../_static/documentation_options.js?v=fc837d61"></script>
+      <script src="../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+<!--suppress ALL -->
+<link href="../../_static/rtd_custom.css" rel="stylesheet" type="text/css">
+
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            jlab_archiver_client
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../_autosummary/jlab_archiver_client.html">jlab_archiver_client</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">jlab_archiver_client</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">jlab_archiver_client.point</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for jlab_archiver_client.point</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;Point query module for retrieving single channel events.</span>
+
+<span class="sd">This module provides functionality for querying the myquery point</span>
+<span class="sd">endpoint, which returns a single event for a specified Process Variable (PV)</span>
+<span class="sd">at or near a given timestamp. This is useful for finding the value of a channel</span>
+<span class="sd">at a specific point in time or for navigating through events sequentially.</span>
+
+<span class="sd">The point endpoint searches for the closest event before (inclusive) the specified</span>
+<span class="sd">timestamp by default. Options exist to search forward in time and to exclude the</span>
+<span class="sd">exact timestamp from the search, which is helpful for finding the next/previous</span>
+<span class="sd">event relative to a known event.</span>
+
+<span class="sd">Key Features:</span>
+<span class="sd">    * Retrieve single event at or near a timestamp</span>
+<span class="sd">    * Search backward (default) or forward in time</span>
+<span class="sd">    * Option to exclude exact timestamp from search</span>
+<span class="sd">    * Useful for sequential event navigation</span>
+<span class="sd">    * Returns full event data including value and metadata</span>
+
+<span class="sd">Classes:</span>
+<span class="sd">    Point: Main class for executing point queries.</span>
+
+<span class="sd">Example::</span>
+
+<span class="sd">    &gt;&gt;&gt; from jlab_archiver_client.config import config</span>
+<span class="sd">    &gt;&gt;&gt; config.set(myquery_server=&quot;localhost:8080&quot;, protocol=&quot;http&quot;)</span>
+<span class="sd">    &gt;&gt;&gt;</span>
+<span class="sd">    &gt;&gt;&gt; from jlab_archiver_client import Point, PointQuery</span>
+<span class="sd">    &gt;&gt;&gt; from datetime import datetime</span>
+<span class="sd">    &gt;&gt;&gt; # Get the event at or before a specific time</span>
+<span class="sd">    &gt;&gt;&gt; query = PointQuery(</span>
+<span class="sd">    ...     channel=&quot;channel1&quot;,</span>
+<span class="sd">    ...     time=datetime.strptime(&quot;2019-08-12 12:00:00&quot;, &quot;%Y-%m-%d %H:%M:%S&quot;),</span>
+<span class="sd">    ...     deployment=&quot;docker&quot;</span>
+<span class="sd">    ... )</span>
+<span class="sd">    &gt;&gt;&gt; point = Point(query)</span>
+<span class="sd">    &gt;&gt;&gt; point.run()</span>
+<span class="sd">    &gt;&gt;&gt; point.event  # Dictionary containing event data</span>
+<span class="sd">    {&#39;datatype&#39;: &#39;DBR_DOUBLE&#39;, &#39;datasize&#39;: 1, &#39;datahost&#39;: &#39;mya&#39;, &#39;data&#39;: {&#39;d&#39;: &#39;2019-08-12 11:55:22&#39;, &#39;v&#39;: 6.20794}}</span>
+
+<span class="sd">See Also:</span>
+<span class="sd">    jlab_archiver_client.query.PointQuery: Query builder for point requests</span>
+<span class="sd">    jlab_archiver_client.config: Configuration settings for archiver endpoints</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">Any</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">requests</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">jlab_archiver_client</span><span class="w"> </span><span class="kn">import</span> <span class="n">utils</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">jlab_archiver_client.config</span><span class="w"> </span><span class="kn">import</span> <span class="n">config</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">jlab_archiver_client.query</span><span class="w"> </span><span class="kn">import</span> <span class="n">PointQuery</span>
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;Point&quot;</span><span class="p">]</span>
+
+
+<div class="viewcode-block" id="Point">
+<a class="viewcode-back" href="../../_autosummary/jlab_archiver_client.point.Point.html#jlab_archiver_client.point.Point">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">Point</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;A class for running calls to myquery&#39;s point endpoint.</span>
+
+<span class="sd">    This endpoint returns a single channel event.  The user supplies the channel name and a timestamp, and myquery</span>
+<span class="sd">    return the closest event before (inclusive) the timestamp.</span>
+
+<span class="sd">    Options exists to look into the future and exclude</span>
+<span class="sd">    the given timestamp from search space.  That is helpful in the scenario that you want to know the next event</span>
+<span class="sd">    before/after an event you already know of.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="Point.__init__">
+<a class="viewcode-back" href="../../_autosummary/jlab_archiver_client.point.Point.html#jlab_archiver_client.point.Point.__init__">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">query</span><span class="p">:</span> <span class="n">PointQuery</span><span class="p">,</span> <span class="n">url</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Construct an instance for running a myquery interval.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            query: The query to run</span>
+<span class="sd">            url: The location of the myquery/interval endpoint. Generated from config if None supplied.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">query</span> <span class="o">=</span> <span class="n">query</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">url</span> <span class="o">=</span> <span class="n">url</span>
+        <span class="k">if</span> <span class="n">url</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">url</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">config</span><span class="o">.</span><span class="n">protocol</span><span class="si">}</span><span class="s2">://</span><span class="si">{</span><span class="n">config</span><span class="o">.</span><span class="n">myquery_server</span><span class="si">}{</span><span class="n">config</span><span class="o">.</span><span class="n">point_path</span><span class="si">}</span><span class="s2">&quot;</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">event</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span></div>
+
+
+<div class="viewcode-block" id="Point.run">
+<a class="viewcode-back" href="../../_autosummary/jlab_archiver_client.point.Point.html#jlab_archiver_client.point.Point.run">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Run a web-based myquery interval query.  This supports querying only one PV at a time.</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            RequestException when a problem making the query has occurred</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">opts</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">query</span><span class="o">.</span><span class="n">to_web_params</span><span class="p">()</span>
+        <span class="n">r</span> <span class="o">=</span> <span class="n">requests</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">url</span><span class="p">,</span> <span class="n">params</span><span class="o">=</span><span class="n">opts</span><span class="p">)</span>
+
+        <span class="n">utils</span><span class="o">.</span><span class="n">check_response</span><span class="p">(</span><span class="n">r</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">event</span> <span class="o">=</span> <span class="n">r</span><span class="o">.</span><span class="n">json</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">event</span><span class="p">[</span><span class="s1">&#39;name&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">query</span><span class="o">.</span><span class="n">channel</span></div>
+</div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright .</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

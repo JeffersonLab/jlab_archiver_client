@@ -5,9 +5,8 @@ import numpy as np
 import pandas as pd
 import requests
 
+from jlab_archiver_client.query import MAX_FRACTIONAL_SECOND_DIGITS
 
-# Max time precision from myquery is nanoseconds or nine decimal places
-MAX_FRACTIONAL_SECOND_DIGITS = 9
 # How many significant figures can a np.float32 reasonably handle.
 SIG_FIGS_FLOAT_MAX = 6
 
@@ -72,8 +71,15 @@ def convert_data_to_series(values: List[Any], ts: List[Any], name: str, metadata
 
     return data
 
-def get_data_types(metadata, enums_as_strings: bool, sig_figs: int =6) -> type:
-    """Determine the datatype that should be used in a pandas DataFrame to represent this data."""
+def get_data_types(metadata, enums_as_strings: bool, sig_figs: int = 6) -> type:
+    """Determine the datatype that should be used in a pandas DataFrame to represent this data.
+
+    Args:
+        metadata: Channel metadata (as provided by myquery)
+        enums_as_strings: True if enums are strings.  False if enums are ints
+        sig_figs: The number of significant figures used to represent the data values.  Default of 6 used as that is
+                  what myquery used as of 2026-05-28.
+    """
 
     rtyp = metadata['datatype']
 

@@ -1,4 +1,4 @@
-fr"""Query builder classes for Jefferson Lab Archiver myquery endpoints.
+r"""Query builder classes for Jefferson Lab Archiver myquery endpoints.
 
 This module provides query builder classes for constructing requests to various
 Jefferson Lab Archiver myquery service endpoints. Each query class encapsulates
@@ -12,7 +12,7 @@ which execute the queries and process the results.
 Many query classes allow the user to specify the timestamp precision and the
 number of significant figures reported for numeric data.  The number of
 significant figures is set to 6, similar to myquery.  The
-timestamp precision by default is set to nanoseconds, but this can be 
+timestamp precision by default is set to nanoseconds, but this can be
 overridden by the user.  Since DataFrame indexes are typically built on the
 timestamp, these should be unique. MYA typically captures event timestamps at
 a precision less than nanoseconds, so this should ensure that timestamps are
@@ -88,7 +88,7 @@ class IntervalQuery(Query):
                  integrate: bool = False,
                  **kwargs
                  ):
-        f"""Construct a query to the myquery interval service.
+        """Construct a query to the myquery interval service.
 
         Args:
             channel: A list of PV Names to query
@@ -194,7 +194,7 @@ class MySamplerQuery(Query):
                  adjust_time_to_server_offset: bool = False,
                  **kwargs
                  ):
-        f"""Construct an instance of MySamplerQuery.
+        """Construct an instance of MySamplerQuery.
 
         Args:
             start: The start date of the query.
@@ -326,7 +326,7 @@ class PointQuery(Query):
                  adjust_time_to_server_offset: bool = False,
                  **kwargs
                  ):
-        f"""Construct a query to the myquery interval service.
+        """Construct a query to the myquery interval service.
 
         Args:
             channel: A list of PV Names to query
@@ -416,7 +416,7 @@ class MyStatsQuery(Query):
                  unix_timestamps_ms: bool = False,
                  adjust_time_to_server_offset: bool = False,
                  **kwargs):
-        f"""Construct an instance of MyStatsQuery.
+        """Construct an instance of MyStatsQuery.
 
         Args:
             pvlist: The list of PVs to collect on

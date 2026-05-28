@@ -197,6 +197,7 @@ def _parse_json_iteratively(response: requests.Response, num_samples: int, # noq
     new_type = None
     is_multivalue = False
     is_integer = False
+    is_str = False
     v_array = None
     v_mask = None
     v_idx = 0
@@ -238,8 +239,6 @@ def _parse_json_iteratively(response: requests.Response, num_samples: int, # noq
             elif state == LABELS:
                 # should not happen as "labels" only maps to an array
                 pass
-            elif state == LABEL_VALUES:
-                label_map_key = value
             elif state == LABEL_SET:
                  label_set_key = value
             elif state == CHANNELS:
@@ -285,14 +284,13 @@ def _parse_json_iteratively(response: requests.Response, num_samples: int, # noq
                         v_array[v_idx] = sample_v
                 elif is_multivalue:
                     v_array[v_idx] = convert_multivalue_sample(None, new_type)
+                # "v" not set and this is a single valued PV
+                elif is_integer:
+                    v_mask[v_idx] = True
+                elif is_str:
+                    v_array[v_idx] = None
                 else:
-                    # "v" not set and this is a single valued PV
-                    if is_integer:
-                        v_mask[v_idx] = True
-                    elif is_str:
-                        v_array[v_idx] = None
-                    else:
-                        v_array[v_idx] = nan
+                    v_array[v_idx] = nan
 
                 v_idx += 1
                 state = DATA

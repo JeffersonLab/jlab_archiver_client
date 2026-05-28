@@ -44,7 +44,8 @@ from typing import Optional
 
 from jlab_archiver_client.config import config
 from jlab_archiver_client.query import (
-    IntervalQuery, MySamplerQuery, MyStatsQuery, PointQuery, ChannelQuery
+    IntervalQuery, MySamplerQuery, MyStatsQuery, PointQuery, ChannelQuery, MAX_FRACTIONAL_SECOND_DIGITS,
+    DEFAULT_SIG_FIGS
 )
 from jlab_archiver_client.interval import Interval
 from jlab_archiver_client.mysampler import MySampler
@@ -127,10 +128,10 @@ def interval_main():
     parser.add_argument('-t', '--sample-type', type=str, default=None,
                         choices=['graphical', 'eventsimple', 'myget', 'mysampler'],
                         help='Sampling algorithm to use')
-    parser.add_argument('-f', '--frac-time-digits', type=int, default=0,
-                        help='Fractional seconds digits (default: 0)')
-    parser.add_argument('-v', '--sig-figs', type=int, default=6,
-                        help='Significant figures for values (default: 6)')
+    parser.add_argument('-f', '--frac-time-digits', type=int, default=MAX_FRACTIONAL_SECOND_DIGITS,
+                        help=f'Fractional seconds digits (default: {MAX_FRACTIONAL_SECOND_DIGITS})')
+    parser.add_argument('-v', '--sig-figs', type=int, default=DEFAULT_SIG_FIGS,
+                        help=f'Significant figures for values (default: {DEFAULT_SIG_FIGS})')
 
     # Boolean flags
     parser.add_argument('-d', '--data-updates-only', action='store_true',
@@ -246,10 +247,10 @@ def mysampler_main():
                         choices=['n_queries', 'stream'],
                         help='Sampling strategy: n_queries (efficient for many updates per sample) or '
                              'stream (efficient for few updates per sample). None uses myquery default.')
-    parser.add_argument('-f', '--frac-time-digits', type=int, default=0,
-                        help='Fractional seconds digits (default: 6)')
-    parser.add_argument('-v', '--sig-figs', type=int, default=6,
-                        help='Significant figures for values (default: 6)')
+    parser.add_argument('-f', '--frac-time-digits', type=int, default=MAX_FRACTIONAL_SECOND_DIGITS,
+                        help=f'Fractional seconds digits (default: {MAX_FRACTIONAL_SECOND_DIGITS})')
+    parser.add_argument('-v', '--sig-figs', type=int, default=DEFAULT_SIG_FIGS,
+                        help=f'Significant figures for values (default: {DEFAULT_SIG_FIGS})')
 
     # Boolean flags
     parser.add_argument('-d', '--data-updates-only', action='store_true',
@@ -354,10 +355,10 @@ def mystats_main():
                         help='Number of time bins for statistics (default: 1)')
     parser.add_argument('-m', '--deployment', type=str, default='history',
                         help='MYA deployment (default: history)')
-    parser.add_argument('-f', '--frac-time-digits', type=int, default=0,
-                        help='Fractional seconds digits (default: 0)')
-    parser.add_argument('-v', '--sig-figs', type=int, default=6,
-                        help='Significant figures for values (default: 6)')
+    parser.add_argument('-f', '--frac-time-digits', type=int, default=MAX_FRACTIONAL_SECOND_DIGITS,
+                        help=f'Fractional seconds digits (default: {MAX_FRACTIONAL_SECOND_DIGITS})')
+    parser.add_argument('-v', '--sig-figs', type=int, default=DEFAULT_SIG_FIGS,
+                        help=f'Significant figures for values (default: {DEFAULT_SIG_FIGS})')
 
     # Boolean flags
     parser.add_argument('-d', '--data-updates-only', action='store_true',
@@ -456,10 +457,10 @@ def point_main():
     # Optional query parameters
     parser.add_argument('-m', '--deployment', type=str, default='history',
                         help='MYA deployment (default: history)')
-    parser.add_argument('-f', '--frac-time-digits', type=int, default=0,
-                        help='Fractional seconds digits (default: 0)')
-    parser.add_argument('-v', '--sig-figs', type=int, default=6,
-                        help='Significant figures for values (default: 6)')
+    parser.add_argument('-f', '--frac-time-digits', type=int, default=MAX_FRACTIONAL_SECOND_DIGITS,
+                        help=f'Fractional seconds digits (default: {MAX_FRACTIONAL_SECOND_DIGITS})')
+    parser.add_argument('-v', '--sig-figs', type=int, default=DEFAULT_SIG_FIGS,
+                        help=f'Significant figures for values (default: {DEFAULT_SIG_FIGS})')
 
     # Boolean flags
     parser.add_argument('-d', '--data-updates-only', action='store_true',

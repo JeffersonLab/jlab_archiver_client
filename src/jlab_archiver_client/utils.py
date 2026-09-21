@@ -119,7 +119,7 @@ def convert_multivalue_sample(sample, dtype) -> np.ndarray:
 
 
 def convert_data_to_dataframe(samples: Dict[str, Any], metadata: Dict[str, Dict[str,Any]],
-                           enums_as_strings: bool, sig_figs: int = 6) -> pd.DataFrame:
+                           enums_as_strings: bool, unix_timestamps_ms: bool, sig_figs: int = 6) -> pd.DataFrame:
     """Process the data response from myquery if multiple channels are included.
 
     If the data is scalar (datasize == 1), then pandas can automatically determine the type.  When datasize > 1, myquery
@@ -130,6 +130,7 @@ def convert_data_to_dataframe(samples: Dict[str, Any], metadata: Dict[str, Dict[
                  values as the dict values
         metadata: Channel metadata returned by myquery.  Keyed on channel names
         enums_as_strings: Should enums be displayed as their string names
+        unix_timestamps_ms: Is the Date field to be converted in unix timestamps in milliseconds.
         sig_figs: How many significant figures were requested.  Lower values will result in a lower precision type used.
 
     Returns:
@@ -139,7 +140,8 @@ def convert_data_to_dataframe(samples: Dict[str, Any], metadata: Dict[str, Dict[
     # Iterate through the channels and convert them if needed.
     for channel_name, val in samples.items():
         if channel_name == "Date":
-            samples[channel_name] = pd.to_datetime(val)
+            if not unix_timestamps_ms:
+                samples[channel_name] = pd.to_datetime(val)
             continue
 
         new_type = get_data_types(metadata=metadata[channel_name]["metadata"], enums_as_strings=enums_as_strings,

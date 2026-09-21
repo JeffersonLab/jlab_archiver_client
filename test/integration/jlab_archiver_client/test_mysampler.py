@@ -22,12 +22,13 @@ def process_vector_series(x: pd.Series):
     """
 
     for i in range(len(x)):
-        val = x[i]
+        idx = x.index[i]
+        val = x[idx]
         if val is None:
             continue
         if isinstance(val, str):
             if val.startswith("[") and val.endswith("]"):
-                x[i] = np.fromstring(val.strip("[]"), sep=" ", dtype=np.float32)
+                x[idx] = np.fromstring(val.strip("[]"), sep=" ", dtype=np.float32)
         elif isinstance(val, float):
             pass
         elif isinstance(val, object):
@@ -35,7 +36,7 @@ def process_vector_series(x: pd.Series):
             # noinspection PyUnresolvedReferences
             if val.str.startswith("[") and val.str.endswith("]"):
                 # noinspection PyUnresolvedReferences
-                x[i] = np.fromstring(val.str.strip("[]"), sep=" ", dtype=np.float32)
+                x[idx] = np.fromstring(val.str.strip("[]"), sep=" ", dtype=np.float32)
 
     return x
 
@@ -48,10 +49,12 @@ class TestMySampler(unittest.TestCase):
     """
 
     @staticmethod
-    def load_mysampler_data(ident: str):
+    def load_mysampler_data(ident: str, unix_epoch_ms: bool = False):
         """Load test case data for mysampler"""
         exp_data = pd.read_csv(f"{DIR}/data/myquery_{ident}-data.csv", index_col=0)
-        exp_data.index = pd.to_datetime(exp_data.index)
+        if not unix_epoch_ms:
+            exp_data.index = pd.to_datetime(exp_data.index)
+
         for col in exp_data:
             if exp_data[col].dtype == "float64":
                 exp_data[col] = exp_data[col].astype("float32")
@@ -314,5 +317,31 @@ class TestMySampler(unittest.TestCase):
         exp_data, exp_disconnects, exp_metadata = self.load_mysampler_data("mysampler_102")
         exp_data = exp_data.apply(process_vector_series, axis=0)
         exp_data[exp_data.isnull()] = None
+        self.check_mysampler_result(exp_data, exp_disconnects, exp_metadata, res_data, res_disconnects,
+                                    res_metadata)
+
+    def test_get_mysampler_102_epoch(self):
+        """Test mysampler query for channel102 over similar time range as channel101."""
+
+        unix_timestamps_ms = True
+        query = MySamplerQuery(start=datetime.strptime("2018-04-24 12:00:00", "%Y-%m-%d %H:%M:%S"),
+                               interval=600_000,  # 10 minutes
+                               num_samples=10,
+                               pvlist=["channel102"],
+                               unix_timestamps_ms=unix_timestamps_ms,
+                               deployment="docker")
+
+        mysampler = MySampler(query)
+        mysampler.run()
+        res_data = mysampler.data
+        res_disconnects = mysampler.disconnects
+        res_metadata = mysampler.metadata
+
+        # self.save_mysampler_data("mysampler_102_epoch", res_data, res_disconnects, res_metadata)
+        exp_data, exp_disconnects, exp_metadata = self.load_mysampler_data("mysampler_102_epoch",
+                                                                           unix_epoch_ms=unix_timestamps_ms)
+        exp_data = exp_data.apply(process_vector_series, axis=0)
+        exp_data[exp_data.isnull()] = None
+
         self.check_mysampler_result(exp_data, exp_disconnects, exp_metadata, res_data, res_disconnects,
                                     res_metadata)

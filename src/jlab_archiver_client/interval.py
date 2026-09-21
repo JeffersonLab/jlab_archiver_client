@@ -177,7 +177,8 @@ class Interval:
             if key != "data":
                 metadata[key] = value
 
-        self.data = utils.convert_data_to_series(values, ts, self.query.channel, metadata, self.query.enums_as_strings)
+        self.data = utils.convert_data_to_series(values, ts, self.query.channel, metadata,
+                                                 self.query.enums_as_strings, self.query.unix_timestamps_ms)
         self.disconnects = disconnects
         self.metadata = metadata
 
@@ -267,7 +268,7 @@ class Interval:
                 for idx, is_true in nan_mask.items():
                     if is_true:
                         # idx is the last row so we go to the end
-                        if next_ts[idx] is pd.NaT:
+                        if pd.isna(next_ts[idx]):
                             df.loc[df.index >= idx, s.name] = np.nan
                         else:
                             # Fill in any value between "here" and the next "real" update.

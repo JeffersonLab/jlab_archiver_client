@@ -12,7 +12,7 @@ SIG_FIGS_FLOAT_MAX = 6
 
 
 def convert_data_to_series(values: List[Any], ts: List[Any], name: str, metadata: Dict[str, Any],
-                           enums_as_strings: bool) -> pd.Series:
+                           enums_as_strings: bool, unix_timestamps_ms: bool = False) -> pd.Series:
     """Process the data response from myquery.
 
     If the data is scalar (datasize == 1), then pandas can automatically determine the type.  When datasize > 1, myquery
@@ -24,10 +24,13 @@ def convert_data_to_series(values: List[Any], ts: List[Any], name: str, metadata
         name: Name of the channel queried.
         metadata: Channel metadata returned by myquery.
         enums_as_strings: Should enums be displayed in their string names?
+        unix_timestamps_ms: Are the timestamps unix timestamps in milliseconds.  If True, the index is left as the
+                            raw integer millisecond values instead of being converted to a DateTimeIndex.
 
     Returns:
         A pandas Series with the data converted from myquery.  Vector valued responses are converted to the
-        appropriate datatype.  The index is the timestamps of each sample.
+        appropriate datatype.  The index is the timestamps of each sample, converted to a DateTimeIndex unless
+        unix_timestamps_ms is True.
     """
 
     def _process_vector_pv(v: str, dtype: Any) -> Any:
@@ -67,7 +70,8 @@ def convert_data_to_series(values: List[Any], ts: List[Any], name: str, metadata
         # This will return values as an array of str
         data = pd.Series(values, index=ts, name=name)
 
-    data.index = pd.to_datetime(data.index)
+    if not unix_timestamps_ms:
+        data.index = pd.to_datetime(data.index)
 
     return data
 

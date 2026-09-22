@@ -111,7 +111,6 @@ class TestInterval(unittest.TestCase):
     def load_interval_data_parallel(ident: str, unix_timestamps_ms: bool = False):
         """Load test case data for interval parallel calls"""
         exp_data = pd.read_csv(f"{DIR}/data/myquery_{ident}-data.csv", index_col=0)
-        print(f"{DIR}/data/myquery_{ident}-data.csv", exp_data.index.dtype)
         if not unix_timestamps_ms:
             exp_data.index = pd.to_datetime(exp_data.index, format="%Y-%m-%d %H:%M:%S.%f")
 

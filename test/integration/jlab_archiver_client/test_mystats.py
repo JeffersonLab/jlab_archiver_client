@@ -209,7 +209,9 @@ class TestMyStats(unittest.TestCase):
                                        num_bins=6,
                                        deployment="docker")
                           )
-        mystats.run()
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", category=UserWarning)
+            mystats.run()
 
         # stats only available for scalar float events
         res_data = mystats.data
@@ -230,7 +232,9 @@ class TestMyStats(unittest.TestCase):
                                        unix_timestamps_ms=True,
                                        deployment="docker")
                           )
-        mystats.run()
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", category=UserWarning)
+            mystats.run()
 
         # stats only available for scalar float events
         res_data = mystats.data

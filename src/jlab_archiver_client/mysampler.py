@@ -137,7 +137,7 @@ class MySampler:
         opts = self.query.to_web_params()
         n_samples = int(opts["n"])
         with requests.get(self.url, params=opts, stream=True) as r:
-            if r.status_code is not requests.codes.ok:
+            if r.status_code != requests.codes.ok:
                 raise RequestException(r.status_code)
             if 'v' in opts:
                 self.data, self.metadata, self.disconnects = _parse_json_iteratively(

@@ -144,8 +144,13 @@ class MyStats:
         self.metadata: Optional[Dict[str, object]] = None
 
     @staticmethod
-    def _channel_series(channel_obj: Dict[str, Any]):
-        """Return a Series indexed by (timestamp, stat) holding the metric values."""
+    def _channel_series(channel_obj: Dict[str, Any], unix_timestamp_millis: bool):
+        """Return a Series indexed by (timestamp, stat) holding the metric values.
+
+        Args:
+            channel_obj:  A dict containing portion of mystats response for a single channel
+            unix_timestamp_millis: Are timestamps presented as millisecond unix timestamps
+        """
         tuples, vals = [], []
 
         # Look at the first entry to determine what metrics to include
@@ -156,7 +161,10 @@ class MyStats:
         metrics = sorted(metrics)
 
         for rec in channel_obj["data"]:
-            ts = pd.to_datetime(rec["begin"])
+            if unix_timestamp_millis:
+                ts = rec["begin"]
+            else:
+                ts = pd.to_datetime(rec["begin"])
             for m in metrics:
                 tuples.append((ts, m))
                 vals.append(rec.get(m))
@@ -187,7 +195,7 @@ class MyStats:
             if "error" in ch_obj.keys():
                 warnings.warn(f"Error querying {ch_name}: {ch_obj['error']}")
             else:
-                series_by_channel[ch_name] = self._channel_series(ch_obj)
+                series_by_channel[ch_name] = self._channel_series(ch_obj, self.query.unix_timestamps_ms)
                 if self.metadata is None:
                     self.metadata = {}
                 self.metadata[ch_name] = ch_obj['metadata']

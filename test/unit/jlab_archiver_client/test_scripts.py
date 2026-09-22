@@ -424,7 +424,7 @@ class TestMySamplerMain(unittest.TestCase):
         call_args = mock_mysampler_class.call_args
         query = call_args[0][0]
 
-        self.assertEquals("stream", query.sample_strategy)
+        self.assertEqual("stream", query.sample_strategy)
 
 
 class TestMyStatsMain(unittest.TestCase):

@@ -23,17 +23,18 @@ def process_vector_series(x: pd.Series):
     """
 
     for i in range(len(x)):
-        val = x[i]
+        idx = x.index[i]
+        val = x[idx]
         if val is None:
             continue
         if isinstance(val, str):
             if val.startswith("[") and val.endswith("]"):
-                x[i] = np.fromstring(val.strip("[]"), sep=" ", dtype=float)
+                x[idx] = np.fromstring(val.strip("[]"), sep=" ", dtype=float)
         elif isinstance(val, float):
             pass
         elif isinstance(val, object):
             if val.str.startswith("[") and val.str.endswith("]"):
-                x[i] = np.fromstring(val.str.strip("[]"), sep=" ", dtype=float)
+                x[idx] = np.fromstring(val.str.strip("[]"), sep=" ", dtype=float)
 
     return x
 
@@ -107,10 +108,11 @@ class TestInterval(unittest.TestCase):
             json.dump(json_normalize(metadata), f)
 
     @staticmethod
-    def load_interval_data_parallel(ident: str):
+    def load_interval_data_parallel(ident: str, unix_timestamps_ms: bool = False):
         """Load test case data for interval parallel calls"""
         exp_data = pd.read_csv(f"{DIR}/data/myquery_{ident}-data.csv", index_col=0)
-        exp_data.index = pd.to_datetime(exp_data.index)
+        if not unix_timestamps_ms:
+            exp_data.index = pd.to_datetime(exp_data.index, format="%Y-%m-%d %H:%M:%S.%f")
 
         with open(f"{DIR}/data/myquery_{ident}-disconnects.json", "r") as f:
             exp_disconnects = json.load(f)
@@ -246,9 +248,30 @@ class TestInterval(unittest.TestCase):
         self.assertEqual(res_data.channel101.dtype, float)
         self.assertEqual(res_data.channel100.dtype, float)
 
+    def test_run_parallel_combined_epoch(self):
+        unix_timestamps_ms = True
+        out = Interval.run_parallel(pvlist=["channel101", "channel100"],
+                                    begin=datetime.strptime("2018-04-24", "%Y-%m-%d"),
+                                    end=datetime.strptime("2018-04-25 01:20:45.002",
+                                                        "%Y-%m-%d %H:%M:%S.%f"),
+                                    deployment="docker",
+                                    unix_timestamps_ms=unix_timestamps_ms,
+                                    prior_point=True,)
+
+        res_data, res_disconnects, res_metadata = out
+
+        # self.save_interval_data_parallel("interval_parallel_1_epoch", res_data, res_disconnects, res_metadata)
+        exp_data, exp_disconnects, exp_metadata = self.load_interval_data_parallel("interval_parallel_1_epoch",
+                                                                                   unix_timestamps_ms=unix_timestamps_ms)
+        self.check_interval_result_parallel(exp_data, exp_disconnects, exp_metadata, res_data, res_disconnects,
+                                            res_metadata)
+        self.assertEqual(res_data.channel101.dtype, float)
+        self.assertEqual(res_data.channel100.dtype, float)
+
     def test_run_parallel_combined2(self):
         out = Interval.run_parallel(pvlist=["channel2", "channel3"],
-                                            begin=datetime.strptime("2019-08-12 00:00:00", "%Y-%m-%d %H:%M:%S"),
+                                            begin=datetime.strptime("2019-08-12 00:00:00",
+                                                                    "%Y-%m-%d %H:%M:%S"),
                                             end=datetime.strptime("2019-08-12 01:20:45.002",
                                                                 "%Y-%m-%d %H:%M:%S.%f"),
                                             deployment="docker",
@@ -262,6 +285,73 @@ class TestInterval(unittest.TestCase):
                                             res_metadata)
         self.assertEqual(float, res_data.channel2.dtype)
         self.assertEqual(object, res_data.channel3.dtype)
+
+    def test_run_parallel_combined2_epoch(self):
+        unix_timestamps_ms = True
+        out = Interval.run_parallel(pvlist=["channel2", "channel3"],
+                                    begin=datetime.strptime("2019-08-12 00:00:00", "%Y-%m-%d %H:%M:%S"),
+                                    end=datetime.strptime("2019-08-12 01:20:45.002",
+                                                        "%Y-%m-%d %H:%M:%S.%f"),
+                                    deployment="docker",
+                                    unix_timestamps_ms=unix_timestamps_ms,
+                                    prior_point=True,)
+        res_data, res_disconnects, res_metadata = out
+
+        # self.save_interval_data_parallel("interval_parallel_2_epoch", res_data, res_disconnects, res_metadata)
+        exp_data, exp_disconnects, exp_metadata = self.load_interval_data_parallel("interval_parallel_2_epoch",
+                                                                                   unix_timestamps_ms=unix_timestamps_ms)
+        exp_data = exp_data.apply(process_vector_series, axis=0)
+        self.check_interval_result_parallel(exp_data, exp_disconnects, exp_metadata, res_data, res_disconnects,
+                                            res_metadata)
+        self.assertEqual(float, res_data.channel2.dtype)
+        self.assertEqual(object, res_data.channel3.dtype)
+
+    def test_run_parallel_combined_trailing_disconnect(self):
+        """Exercise the _combine_series trailing-disconnect bug with unix_timestamps_ms=False.
+
+        channel101 disconnects (NETWORK_DISCONNECTION) at 2018-04-24 12:19:44 and does not recover until 12:32:45.  By
+        ending the window at 12:25:00, that disconnect is the channel's last event, so the combined frame's final row
+        must be NaN for channel101.
+        """
+        out = Interval.run_parallel(pvlist=["channel101", "channel100"],
+                                            begin=datetime.strptime("2018-04-24", "%Y-%m-%d"),
+                                            end=datetime.strptime("2018-04-24 12:25:00", "%Y-%m-%d %H:%M:%S"),
+                                            deployment="docker",
+                                            prior_point=True,)
+        res_data, res_disconnects, res_metadata = out
+
+        # Confirm we are exercising the epoch-ms path (integer index, not a DatetimeIndex).
+        self.assertTrue(pd.api.types.is_datetime64_dtype(res_data.index),
+                        f"Expected an datetime index, got dtype {res_data.index.dtype}")
+
+        # channel101 is disconnected at the end of the window, so its last value must be NaN.
+        last_val = res_data["channel101"].iloc[-1]
+        self.assertTrue(np.isnan(last_val),
+                        f"Trailing disconnect should be NaN, got {last_val}")
+
+    def test_run_parallel_combined_epoch_trailing_disconnect(self):
+        """Exercise the _combine_series trailing-disconnect bug with unix_timestamps_ms=True.
+
+        channel101 disconnects (NETWORK_DISCONNECTION) at 2018-04-24 12:19:44 and does not recover until 12:32:45.  By
+        ending the window at 12:25:00, that disconnect is the channel's last event, so the combined frame's final row
+        must be NaN for channel101.
+        """
+        out = Interval.run_parallel(pvlist=["channel101", "channel100"],
+                                            begin=datetime.strptime("2018-04-24", "%Y-%m-%d"),
+                                            end=datetime.strptime("2018-04-24 12:25:00", "%Y-%m-%d %H:%M:%S"),
+                                            deployment="docker",
+                                            prior_point=True,
+                                            unix_timestamps_ms=True,)
+        res_data, res_disconnects, res_metadata = out
+
+        # Confirm we are exercising the epoch-ms path (integer index, not a DatetimeIndex).
+        self.assertTrue(pd.api.types.is_integer_dtype(res_data.index),
+                        f"Expected an integer epoch-ms index, got dtype {res_data.index.dtype}")
+
+        # channel101 is disconnected at the end of the window, so its last value must be NaN.
+        last_val = res_data["channel101"].iloc[-1]
+        self.assertTrue(np.isnan(last_val),
+                        f"Trailing disconnect should be NaN, got {last_val}")
 
     def test__combine_series(self):
         """Test if internal logic for combining series works."""

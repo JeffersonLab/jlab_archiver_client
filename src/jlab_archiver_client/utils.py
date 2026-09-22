@@ -12,7 +12,7 @@ SIG_FIGS_FLOAT_MAX = 6
 
 
 def convert_data_to_series(values: List[Any], ts: List[Any], name: str, metadata: Dict[str, Any],
-                           enums_as_strings: bool) -> pd.Series:
+                           enums_as_strings: bool, unix_timestamps_ms: bool = False) -> pd.Series:
     """Process the data response from myquery.
 
     If the data is scalar (datasize == 1), then pandas can automatically determine the type.  When datasize > 1, myquery
@@ -24,10 +24,13 @@ def convert_data_to_series(values: List[Any], ts: List[Any], name: str, metadata
         name: Name of the channel queried.
         metadata: Channel metadata returned by myquery.
         enums_as_strings: Should enums be displayed in their string names?
+        unix_timestamps_ms: Are the timestamps unix timestamps in milliseconds.  If True, the index is left as the
+                            raw integer millisecond values instead of being converted to a DateTimeIndex.
 
     Returns:
         A pandas Series with the data converted from myquery.  Vector valued responses are converted to the
-        appropriate datatype.  The index is the timestamps of each sample.
+        appropriate datatype.  The index is the timestamps of each sample, converted to a DateTimeIndex unless
+        unix_timestamps_ms is True.
     """
 
     def _process_vector_pv(v: str, dtype: Any) -> Any:
@@ -67,7 +70,8 @@ def convert_data_to_series(values: List[Any], ts: List[Any], name: str, metadata
         # This will return values as an array of str
         data = pd.Series(values, index=ts, name=name)
 
-    data.index = pd.to_datetime(data.index)
+    if not unix_timestamps_ms:
+        data.index = pd.to_datetime(data.index)
 
     return data
 
@@ -119,7 +123,7 @@ def convert_multivalue_sample(sample, dtype) -> np.ndarray:
 
 
 def convert_data_to_dataframe(samples: Dict[str, Any], metadata: Dict[str, Dict[str,Any]],
-                           enums_as_strings: bool, sig_figs: int = 6) -> pd.DataFrame:
+                           enums_as_strings: bool, unix_timestamps_ms: bool, sig_figs: int = 6) -> pd.DataFrame:
     """Process the data response from myquery if multiple channels are included.
 
     If the data is scalar (datasize == 1), then pandas can automatically determine the type.  When datasize > 1, myquery
@@ -130,6 +134,7 @@ def convert_data_to_dataframe(samples: Dict[str, Any], metadata: Dict[str, Dict[
                  values as the dict values
         metadata: Channel metadata returned by myquery.  Keyed on channel names
         enums_as_strings: Should enums be displayed as their string names
+        unix_timestamps_ms: Is the Date field to be converted in unix timestamps in milliseconds.
         sig_figs: How many significant figures were requested.  Lower values will result in a lower precision type used.
 
     Returns:
@@ -139,7 +144,8 @@ def convert_data_to_dataframe(samples: Dict[str, Any], metadata: Dict[str, Dict[
     # Iterate through the channels and convert them if needed.
     for channel_name, val in samples.items():
         if channel_name == "Date":
-            samples[channel_name] = pd.to_datetime(val)
+            if not unix_timestamps_ms:
+                samples[channel_name] = pd.to_datetime(val)
             continue
 
         new_type = get_data_types(metadata=metadata[channel_name]["metadata"], enums_as_strings=enums_as_strings,

@@ -1,6 +1,7 @@
 # IDE files
 .idea
 .vscode
+.mcp.json
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

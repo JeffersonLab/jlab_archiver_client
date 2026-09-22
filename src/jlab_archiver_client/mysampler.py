@@ -137,7 +137,7 @@ class MySampler:
         opts = self.query.to_web_params()
         n_samples = int(opts["n"])
         with requests.get(self.url, params=opts, stream=True) as r:
-            if r.status_code is not requests.codes.ok:
+            if r.status_code != requests.codes.ok:
                 raise RequestException(r.status_code)
             if 'v' in opts:
                 self.data, self.metadata, self.disconnects = _parse_json_iteratively(
@@ -145,6 +145,7 @@ class MySampler:
                     num_samples=n_samples,
                     enums_as_strings=self.query.enums_as_strings,
                     sig_figs=int(opts["v"]),
+                    unix_timestamps_ms=self.query.unix_timestamps_ms,
                 )
             else:
                 self.data, self.metadata, self.disconnects = _parse_json_iteratively(
@@ -152,10 +153,11 @@ class MySampler:
                     num_samples=n_samples,
                     enums_as_strings=self.query.enums_as_strings,
                     sig_figs=6,
+                    unix_timestamps_ms=self.query.unix_timestamps_ms,
                 )
 
 def _parse_json_iteratively(response: requests.Response, num_samples: int, # noqa: PLR0912, PLR0915
-                            enums_as_strings: bool, sig_figs: int | None,
+                            enums_as_strings: bool, sig_figs: int | None, unix_timestamps_ms: bool,
                             ) -> Tuple[pd.DataFrame, Dict[str, dict], Dict[str, pd.Series]]:
     """Stream-parse the mysampler JSON with a ijson.basic_parse approach and manual state machine.
 
@@ -218,7 +220,10 @@ def _parse_json_iteratively(response: requests.Response, num_samples: int, # noq
     sample_v_list = None
 
     # Aggregates
-    dates = np.empty(num_samples, dtype="datetime64[ns]")
+    if unix_timestamps_ms:
+        dates = np.empty(num_samples, dtype="int64")
+    else:
+        dates = np.empty(num_samples, dtype="datetime64[ns]")
     metadata_set: Dict[str, dict] = {}
     disconnects: Dict[str, pd.Series] = {}
     channel_arrays: Dict[str, np.ndarray] = {}
@@ -272,7 +277,10 @@ def _parse_json_iteratively(response: requests.Response, num_samples: int, # noq
         elif event == "end_map":
             if state == SAMPLE:
                 if is_first_channel:
-                    dates[v_idx] = np.datetime64(sample_d)
+                    if unix_timestamps_ms:
+                        dates[v_idx] = sample_d
+                    else:
+                        dates[v_idx] = np.datetime64(sample_d)
                 if sample_t is not None:
                     dts.append(sample_d)
                     dv.append(sample_t)

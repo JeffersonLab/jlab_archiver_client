@@ -11,7 +11,7 @@ from jlab_archiver_client import MyStatsQuery, MyStats
 class TestMyStats(unittest.TestCase):
 
     @staticmethod
-    def construct_expected() -> Tuple[pd.DataFrame, Dict[str, Any]]:
+    def construct_expected(unix_timestamps_ms: bool = False) -> Tuple[pd.DataFrame, Dict[str, Any]]:
         """Construct expected data and metadata for MyStats query integration tests.
 
         This helper method creates a reference DataFrame and metadata dictionary that represent
@@ -54,7 +54,14 @@ class TestMyStats(unittest.TestCase):
             'DBR_DOUBLE'
         """
         # Define the index levels
-        dates = pd.date_range("2024-04-24", "2024-04-29", freq="D")
+        if unix_timestamps_ms:
+            dates = pd.date_range("2024-04-24",
+                                  "2024-04-29",
+                                  freq="D",
+                                  tz="America/New_York",
+                                  unit="ms").values.astype(int)
+        else:
+            dates = pd.date_range("2024-04-24", "2024-04-29", freq="D")
         stats = [
             "duration", "eventCount", "integration", "max", "mean",
             "min", "rms", "stdev", "updateCount"
@@ -144,6 +151,28 @@ class TestMyStats(unittest.TestCase):
         pd.testing.assert_frame_equal(exp_data, res_data)
         self.assertDictEqual(exp_metadata, res_metadata)
 
+    def test_get_mystats_epoch(self):
+        """Test basic usage"""
+        #  http://localhost:8080/myquery/mystats?c=channel100,channel101&b=2024-04-24&e=2024-04-30&n=6&m=docker&f=&v=
+        unix_timestamps_ms = True
+        exp_data, exp_metadata = self.construct_expected(unix_timestamps_ms=unix_timestamps_ms)
+
+        mystats = MyStats(MyStatsQuery(pvlist=["channel100", "channel101"],
+                                       start=datetime.strptime("2024-04-24", "%Y-%m-%d"),
+                                       end=datetime.strptime("2024-04-30", "%Y-%m-%d"),
+                                       num_bins=6,
+                                       unix_timestamps_ms=unix_timestamps_ms,
+                                       deployment="docker")
+                          )
+        mystats.run()
+
+        res_data = mystats.data
+        res_metadata = mystats.metadata
+
+        pd.testing.assert_frame_equal(exp_data, res_data)
+        self.assertDictEqual(exp_metadata, res_metadata)
+
+
     def test_get_mystats_2(self):
         """Test basic usage with an unsupported Enum PV"""
         query = MyStatsQuery(
@@ -180,7 +209,32 @@ class TestMyStats(unittest.TestCase):
                                        num_bins=6,
                                        deployment="docker")
                           )
-        mystats.run()
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", category=UserWarning)
+            mystats.run()
+
+        # stats only available for scalar float events
+        res_data = mystats.data
+        res_metadata = mystats.metadata
+
+        self.assertIsNone(res_data)
+        self.assertIsNone(res_metadata)
+
+    def test_get_mystats_102_epoch(self):
+        """Test mystats query for channel102 over similar time range as channel101.
+
+        No data should be returned here as channel102 is an array-valued PV which mystats does not support.
+        """
+        mystats = MyStats(MyStatsQuery(pvlist=["channel102"],
+                                       start=datetime.strptime("2018-04-24", "%Y-%m-%d"),
+                                       end=datetime.strptime("2018-05-01", "%Y-%m-%d"),
+                                       num_bins=6,
+                                       unix_timestamps_ms=True,
+                                       deployment="docker")
+                          )
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", category=UserWarning)
+            mystats.run()
 
         # stats only available for scalar float events
         res_data = mystats.data

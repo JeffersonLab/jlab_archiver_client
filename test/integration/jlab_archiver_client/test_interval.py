@@ -23,17 +23,18 @@ def process_vector_series(x: pd.Series):
     """
 
     for i in range(len(x)):
-        val = x[i]
+        idx = x.index[i]
+        val = x[idx]
         if val is None:
             continue
         if isinstance(val, str):
             if val.startswith("[") and val.endswith("]"):
-                x[i] = np.fromstring(val.strip("[]"), sep=" ", dtype=float)
+                x[idx] = np.fromstring(val.strip("[]"), sep=" ", dtype=float)
         elif isinstance(val, float):
             pass
         elif isinstance(val, object):
             if val.str.startswith("[") and val.str.endswith("]"):
-                x[i] = np.fromstring(val.str.strip("[]"), sep=" ", dtype=float)
+                x[idx] = np.fromstring(val.str.strip("[]"), sep=" ", dtype=float)
 
     return x
 
@@ -107,11 +108,12 @@ class TestInterval(unittest.TestCase):
             json.dump(json_normalize(metadata), f)
 
     @staticmethod
-    def load_interval_data_parallel(ident: str, unix_epoch_ms: bool = False):
+    def load_interval_data_parallel(ident: str, unix_timestamps_ms: bool = False):
         """Load test case data for interval parallel calls"""
         exp_data = pd.read_csv(f"{DIR}/data/myquery_{ident}-data.csv", index_col=0)
-        if not unix_epoch_ms:
-            exp_data.index = pd.to_datetime(exp_data.index)
+        print(f"{DIR}/data/myquery_{ident}-data.csv", exp_data.index.dtype)
+        if not unix_timestamps_ms:
+            exp_data.index = pd.to_datetime(exp_data.index, format="%Y-%m-%d %H:%M:%S.%f")
 
         with open(f"{DIR}/data/myquery_{ident}-disconnects.json", "r") as f:
             exp_disconnects = json.load(f)
@@ -248,19 +250,20 @@ class TestInterval(unittest.TestCase):
         self.assertEqual(res_data.channel100.dtype, float)
 
     def test_run_parallel_combined_epoch(self):
-
+        unix_timestamps_ms = True
         out = Interval.run_parallel(pvlist=["channel101", "channel100"],
                                     begin=datetime.strptime("2018-04-24", "%Y-%m-%d"),
                                     end=datetime.strptime("2018-04-25 01:20:45.002",
                                                         "%Y-%m-%d %H:%M:%S.%f"),
                                     deployment="docker",
-                                    unix_epoch_ms=True,
+                                    unix_timestamps_ms=unix_timestamps_ms,
                                     prior_point=True,)
 
         res_data, res_disconnects, res_metadata = out
 
         # self.save_interval_data_parallel("interval_parallel_1_epoch", res_data, res_disconnects, res_metadata)
-        exp_data, exp_disconnects, exp_metadata = self.load_interval_data_parallel("interval_parallel_1_epoch")
+        exp_data, exp_disconnects, exp_metadata = self.load_interval_data_parallel("interval_parallel_1_epoch",
+                                                                                   unix_timestamps_ms=unix_timestamps_ms)
         self.check_interval_result_parallel(exp_data, exp_disconnects, exp_metadata, res_data, res_disconnects,
                                             res_metadata)
         self.assertEqual(res_data.channel101.dtype, float)
@@ -268,7 +271,8 @@ class TestInterval(unittest.TestCase):
 
     def test_run_parallel_combined2(self):
         out = Interval.run_parallel(pvlist=["channel2", "channel3"],
-                                            begin=datetime.strptime("2019-08-12 00:00:00", "%Y-%m-%d %H:%M:%S"),
+                                            begin=datetime.strptime("2019-08-12 00:00:00",
+                                                                    "%Y-%m-%d %H:%M:%S"),
                                             end=datetime.strptime("2019-08-12 01:20:45.002",
                                                                 "%Y-%m-%d %H:%M:%S.%f"),
                                             deployment="docker",
@@ -283,18 +287,20 @@ class TestInterval(unittest.TestCase):
         self.assertEqual(float, res_data.channel2.dtype)
         self.assertEqual(object, res_data.channel3.dtype)
 
-    def test_run_parallel_combined2(self):
+    def test_run_parallel_combined2_epoch(self):
+        unix_timestamps_ms = True
         out = Interval.run_parallel(pvlist=["channel2", "channel3"],
                                     begin=datetime.strptime("2019-08-12 00:00:00", "%Y-%m-%d %H:%M:%S"),
                                     end=datetime.strptime("2019-08-12 01:20:45.002",
                                                         "%Y-%m-%d %H:%M:%S.%f"),
                                     deployment="docker",
-                                    unix_epoch_ms=True,
+                                    unix_timestamps_ms=unix_timestamps_ms,
                                     prior_point=True,)
         res_data, res_disconnects, res_metadata = out
 
         # self.save_interval_data_parallel("interval_parallel_2_epoch", res_data, res_disconnects, res_metadata)
-        exp_data, exp_disconnects, exp_metadata = self.load_interval_data_parallel("interval_parallel_2_epoch")
+        exp_data, exp_disconnects, exp_metadata = self.load_interval_data_parallel("interval_parallel_2_epoch",
+                                                                                   unix_timestamps_ms=unix_timestamps_ms)
         exp_data = exp_data.apply(process_vector_series, axis=0)
         self.check_interval_result_parallel(exp_data, exp_disconnects, exp_metadata, res_data, res_disconnects,
                                             res_metadata)

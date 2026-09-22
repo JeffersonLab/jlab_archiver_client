@@ -313,9 +313,6 @@ class TestInterval(unittest.TestCase):
         channel101 disconnects (NETWORK_DISCONNECTION) at 2018-04-24 12:19:44 and does not recover until 12:32:45.  By
         ending the window at 12:25:00, that disconnect is the channel's last event, so the combined frame's final row
         must be NaN for channel101.
-
-        _combine_series re-inserts NaN over disconnect spans and special-cases the trailing disconnect with an
-        `is pd.NaT` check.  That sentinel only appears for a DatetimeIndex, which this scenario should have.
         """
         out = Interval.run_parallel(pvlist=["channel101", "channel100"],
                                             begin=datetime.strptime("2018-04-24", "%Y-%m-%d"),
@@ -339,11 +336,6 @@ class TestInterval(unittest.TestCase):
         channel101 disconnects (NETWORK_DISCONNECTION) at 2018-04-24 12:19:44 and does not recover until 12:32:45.  By
         ending the window at 12:25:00, that disconnect is the channel's last event, so the combined frame's final row
         must be NaN for channel101.
-
-        _combine_series re-inserts NaN over disconnect spans and special-cases the trailing disconnect with an
-        `is pd.NaT` check.  That sentinel only appears for a DatetimeIndex; with the integer epoch-ms index, shift(-1)
-        yields np.nan instead, the branch is missed, and the trailing disconnect is left forward-filled with the prior
-        good value (7.755) instead of NaN.
         """
         out = Interval.run_parallel(pvlist=["channel101", "channel100"],
                                             begin=datetime.strptime("2018-04-24", "%Y-%m-%d"),

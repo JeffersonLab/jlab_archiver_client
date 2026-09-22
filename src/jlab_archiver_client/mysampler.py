@@ -221,7 +221,7 @@ def _parse_json_iteratively(response: requests.Response, num_samples: int, # noq
 
     # Aggregates
     if unix_timestamps_ms:
-        dates = np.empty(num_samples, dtype="int")
+        dates = np.empty(num_samples, dtype="int64")
     else:
         dates = np.empty(num_samples, dtype="datetime64[ns]")
     metadata_set: Dict[str, dict] = {}

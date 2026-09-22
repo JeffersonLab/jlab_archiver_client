@@ -1,7 +1,7 @@
 import unittest
 import warnings
 from datetime import datetime
-from typing import Tuple, Any, Dict, List
+from typing import Tuple, Any, Dict
 
 import numpy as np
 import pandas as pd

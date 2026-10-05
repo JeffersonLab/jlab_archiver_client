@@ -6,6 +6,7 @@ from typing import Dict
 
 import numpy as np
 import pandas as pd
+from requests import RequestException
 
 from jlab_archiver_client import MySampler
 from jlab_archiver_client import MySamplerQuery
@@ -213,6 +214,68 @@ class TestMySampler(unittest.TestCase):
                                res_metadata)
         self.assertEqual(object, res_data.channel2.dtype)
         self.assertEqual(object, res_data.channel3.dtype)
+
+    def test_get_mysampler_unarchived_pv(self):
+        """Test query with a float type and a PV name that is not in the archiver raises error (< 1000 samples).
+
+        We've seen situations where a small request behaves differently than a large request, breakpoint ~1000 samples
+        """
+        query = MySamplerQuery(start=datetime.strptime("2019-08-12 00:00:00", "%Y-%m-%d %H:%M:%S"),
+                                       interval=1, # 1 millisecond
+                                       num_samples=500,
+                                       pvlist=["channel1", "bad_channel"],
+                                       deployment="docker")
+
+        mysampler = MySampler(query)
+        with self.assertRaises(RequestException):
+            mysampler.run()
+
+    def test_get_mysampler_unarchived_pv2(self):
+        """Test query with a float type and a PV name that is not in the archiver raises error (>= 1000 samples).
+
+        We've seen situations where a small request behaves differently than a large request, breakpoint ~1000 samples
+        """
+        query = MySamplerQuery(start=datetime.strptime("2019-08-12 00:00:00", "%Y-%m-%d %H:%M:%S"),
+                                       interval=1, # 1 millisecond
+                                       num_samples=5000,
+                                       pvlist=["channel1", "bad_channel"],
+                                       deployment="docker")
+
+        mysampler = MySampler(query)
+        with self.assertRaises(RequestException):
+            mysampler.run()
+
+    def test_get_mysampler_unarchived_pv3(self):
+        """Test query with a float type and a PV name that is not in the archiver raises error (< 1000 samples).
+
+        We've seen situations where a small request behaves differently than a large request, breakpoint ~1000 samples.
+        Trying different orders of the PV as we've seen that have an impact.
+        """
+        query = MySamplerQuery(start=datetime.strptime("2019-08-12 00:00:00", "%Y-%m-%d %H:%M:%S"),
+                               interval=1,  # 1 millisecond
+                               num_samples=500,
+                               pvlist=["bad_channel", "channel1"],
+                               deployment="docker")
+
+        mysampler = MySampler(query)
+        with self.assertRaises(RequestException):
+            mysampler.run()
+
+    def test_get_mysampler_unarchived_pv4(self):
+        """Test query with a float type and a PV name that is not in the archiver raises error (>= 1000 samples).
+
+        We've seen situations where a small request behaves differently than a large request, breakpoint ~1000 samples
+        Trying different orders of the PV as we've seen that have an impact.
+        """
+        query = MySamplerQuery(start=datetime.strptime("2019-08-12 00:00:00", "%Y-%m-%d %H:%M:%S"),
+                               interval=1,  # 1 millisecond
+                               num_samples=5000,
+                               pvlist=["bad_channel", "channel1"],
+                               deployment="docker")
+
+        mysampler = MySampler(query)
+        with self.assertRaises(RequestException):
+            mysampler.run()
 
     def test_get_mysampler_history_origin(self):
         """Test mysampler when the first sample is both a non-standard update event ("CHANNELS_PRIOR_DATA_DISCARDED")"""

@@ -91,8 +91,20 @@ class TestParseJsonIteratively(unittest.TestCase):
                              "bad2": {"error": "bad2 missing"}}}
         with self.assertRaises(RequestException) as context:
             parse(body)
+        # Fail fast on the first error rather than parsing the rest of the stream
         self.assertIn("bad1: bad1 missing", str(context.exception))
-        self.assertIn("bad2: bad2 missing", str(context.exception))
+        self.assertNotIn("bad2", str(context.exception))
+
+    def test_bad_channel_stops_parsing(self):
+        """The parser should raise on the first channel error without reading the rest of the stream."""
+        content = (b'{"channels":{"bad_channel":{"error":"' + BAD_ERROR.encode("utf-8") + b'"},'
+                   b'"ch1":{ this is not valid JSON and would fail if parsed')
+        response = make_response({})
+        response.raw = io.BytesIO(content)
+        with self.assertRaises(RequestException) as context:
+            _parse_json_iteratively(response, num_samples=3, enums_as_strings=False, sig_figs=6,
+                                    unix_timestamps_ms=False)
+        self.assertIn(BAD_ERROR, str(context.exception))
 
     def test_truncated_channel(self):
         body = {"channels": {"ch1": good_channel("ch1", [1.0, 2.0])}}

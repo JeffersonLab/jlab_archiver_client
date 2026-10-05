@@ -204,8 +204,9 @@ def _parse_json_iteratively(response: requests.Response, num_samples: int, # noq
         sig_figs: How many significant figures did the end user want for numeric data.
 
     Raises:
-        RequestException if any channel reports an error (e.g., the PV is not archived) or does not have num_samples
-        samples.  myquery may return channel errors within a 200 response once the response is too large to buffer.
+        RequestException as soon as a channel reports an error (e.g., the PV is not archived) or does not have
+        num_samples samples.  myquery may return channel errors within a 200 response once the response is too large
+        to buffer.  Only the first failing channel is reported, since finding others requires reading the full stream.
     """
 
     response.raw.decode_content = True
@@ -243,7 +244,6 @@ def _parse_json_iteratively(response: requests.Response, num_samples: int, # noq
     dv = None
     dts = None
     labels = None # Array of label set objects ([{"d": <date>, "values": ["enum0", ...]}]
-    channel_error = None  # Error message myquery reported in place of this channel's metadata and data
 
     # Per-label_set
     label_set_key = None # 'd' or 'values' within a label set
@@ -265,7 +265,6 @@ def _parse_json_iteratively(response: requests.Response, num_samples: int, # noq
     metadata_set: Dict[str, dict] = {}
     disconnects: Dict[str, pd.Series] = {}
     channel_arrays: Dict[str, np.ndarray] = {}
-    channel_errors: Dict[str, str] = {}
 
     # Hot-path local references — saves a LOAD_GLOBAL per event for tight inner work.
     nan = np.nan
@@ -295,7 +294,6 @@ def _parse_json_iteratively(response: requests.Response, num_samples: int, # noq
                 v_mask = None
                 dv = None
                 dts = None
-                channel_error = None
             # ROOT has only "channels" — no-op.
 
         elif event == "start_map":
@@ -384,18 +382,11 @@ def _parse_json_iteratively(response: requests.Response, num_samples: int, # noq
 
             elif state == CHANNEL:
                 # End of one channel — stash its array and disconnects.
-                if channel_error is not None:
-                    channel_errors[channel_name] = channel_error
-                    state = CHANNELS
-                    continue
                 if v_array is None:
-                    channel_errors[channel_name] = "No metadata or data returned"
-                    state = CHANNELS
-                    continue
+                    raise RequestException(_channel_error_message({channel_name: "No metadata or data returned"}))
                 if v_idx != num_samples:
-                    channel_errors[channel_name] = f"Expected {num_samples} samples, received {v_idx}"
-                    state = CHANNELS
-                    continue
+                    raise RequestException(_channel_error_message(
+                        {channel_name: f"Expected {num_samples} samples, received {v_idx}"}))
 
                 if is_integer:
                     column = pd.arrays.IntegerArray(v_array, v_mask, copy=False)
@@ -462,12 +453,11 @@ def _parse_json_iteratively(response: requests.Response, num_samples: int, # noq
             label_date = value
         elif state == CHANNEL:
             if current_key == "error":
-                channel_error = value
-            elif metadata is not None:
+                # Fail fast.  Leaving the parser here lets the caller close the connection instead of downloading
+                # and parsing the rest of a potentially large response.
+                raise RequestException(_channel_error_message({channel_name: value}))
+            if metadata is not None:
                 metadata[current_key] = value
-
-    if len(channel_errors) > 0:
-        raise RequestException(_channel_error_message(channel_errors))
 
     # Build the DataFrame once, no incremental column assignment.
     if first_channel is not None:

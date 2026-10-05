@@ -130,7 +130,8 @@ class MySampler:
         Results will be stored in the data, disconnects, and metadata fields.
 
         Raises:
-            RequestException when a problem making the query has occurred
+            RequestException when a problem making the query has occurred, including when any requested PV could not
+            be queried (e.g., it is not archived).
         """
 
         # Make the request
@@ -138,7 +139,7 @@ class MySampler:
         n_samples = int(opts["n"])
         with requests.get(self.url, params=opts, stream=True) as r:
             if r.status_code != requests.codes.ok:
-                raise RequestException(r.status_code)
+                _raise_for_bad_response(r)
             if 'v' in opts:
                 self.data, self.metadata, self.disconnects = _parse_json_iteratively(
                     r,
@@ -156,6 +157,38 @@ class MySampler:
                     unix_timestamps_ms=self.query.unix_timestamps_ms,
                 )
 
+
+def _channel_error_message(errors: Dict[str, str]) -> str:
+    """Format per-channel errors reported by mysampler into a single exception message."""
+    details = "; ".join(f"{name}: {msg}" for name, msg in errors.items())
+    return f"Error querying channel(s). {details}"
+
+
+def _raise_for_bad_response(r: requests.Response) -> None:
+    """Raise a RequestException describing a non-200 mysampler response.
+
+    myquery reports channel-specific problems (e.g., a PV that is not archived) in the response body as
+    {"channels": {<name>: {"error": <msg>}}}.  When the response is small enough to be buffered on the server, it is
+    returned with a 400 status.  Report those per-channel errors instead of the whole (potentially large) body.
+
+    Raises:
+        RequestException always
+    """
+    errors = {}
+    try:
+        channels = r.json().get("channels", {})
+        errors = {name: obj["error"] for name, obj in channels.items() if "error" in obj}
+    except (ValueError, AttributeError, TypeError):
+        pass
+
+    if len(errors) > 0:
+        raise RequestException(f"status={r.status_code} {_channel_error_message(errors)}")
+
+    utils.check_response(r)
+    # check_response only covers >= 400.  Anything else that is not a 200 is still unexpected.
+    raise RequestException(f"Unexpected response from server. status={r.status_code} details={r.reason}")
+
+
 def _parse_json_iteratively(response: requests.Response, num_samples: int, # noqa: PLR0912, PLR0915
                             enums_as_strings: bool, sig_figs: int | None, unix_timestamps_ms: bool,
                             ) -> Tuple[pd.DataFrame, Dict[str, dict], Dict[str, pd.Series]]:
@@ -169,6 +202,11 @@ def _parse_json_iteratively(response: requests.Response, num_samples: int, # noq
         num_samples: The number of samples we expect to have
         enums_as_strings: Are enumerated type variables expected as strings or ints.  strings if True
         sig_figs: How many significant figures did the end user want for numeric data.
+
+    Raises:
+        RequestException as soon as a channel reports an error (e.g., the PV is not archived) or does not have
+        num_samples samples.  myquery may return channel errors within a 200 response once the response is too large
+        to buffer.  Only the first failing channel is reported, since finding others requires reading the full stream.
     """
 
     response.raw.decode_content = True
@@ -247,10 +285,15 @@ def _parse_json_iteratively(response: requests.Response, num_samples: int, # noq
             elif state == LABEL_SET:
                  label_set_key = value
             elif state == CHANNELS:
+                # New channel — reset per-channel state so nothing leaks from the previous channel.  A channel that
+                # myquery could not query has only an "error" key, and never sets up its own metadata or arrays.
                 channel_name = value
-                if first_channel is None:
-                    first_channel = channel_name
-                is_first_channel = (channel_name == first_channel)
+                current_key = None
+                metadata = None
+                v_array = None
+                v_mask = None
+                dv = None
+                dts = None
             # ROOT has only "channels" — no-op.
 
         elif event == "start_map":
@@ -339,6 +382,12 @@ def _parse_json_iteratively(response: requests.Response, num_samples: int, # noq
 
             elif state == CHANNEL:
                 # End of one channel — stash its array and disconnects.
+                if v_array is None:
+                    raise RequestException(_channel_error_message({channel_name: "No metadata or data returned"}))
+                if v_idx != num_samples:
+                    raise RequestException(_channel_error_message(
+                        {channel_name: f"Expected {num_samples} samples, received {v_idx}"}))
+
                 if is_integer:
                     column = pd.arrays.IntegerArray(v_array, v_mask, copy=False)
                 else:
@@ -354,6 +403,10 @@ def _parse_json_iteratively(response: requests.Response, num_samples: int, # noq
 
         elif event == "start_array":
             if state == CHANNEL and current_key == "data":
+                # The shared time index comes from the first channel that actually returns data.
+                if first_channel is None:
+                    first_channel = channel_name
+                is_first_channel = (channel_name == first_channel)
                 state = DATA
             elif state == SAMPLE and current_key == "v":
                 sample_v_list = []
@@ -399,7 +452,12 @@ def _parse_json_iteratively(response: requests.Response, num_samples: int, # noq
         elif state == LABEL_SET and label_set_key == "d":
             label_date = value
         elif state == CHANNEL:
-            metadata[current_key] = value
+            if current_key == "error":
+                # Fail fast.  Leaving the parser here lets the caller close the connection instead of downloading
+                # and parsing the rest of a potentially large response.
+                raise RequestException(_channel_error_message({channel_name: value}))
+            if metadata is not None:
+                metadata[current_key] = value
 
     # Build the DataFrame once, no incremental column assignment.
     if first_channel is not None:

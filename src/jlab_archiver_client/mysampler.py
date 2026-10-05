@@ -17,6 +17,7 @@ Key Features:
     * Separate tracking of disconnect events with original metadata
     * Configurable sampling intervals and time ranges
     * Support for enum-to-string conversion
+    * Streaming of large queries to parquet files in time chunks (MySampler.run_to_parquet, requires pyarrow)
 
 Classes:
     MySampler: Main class for executing mysampler queries and storing results.
@@ -69,7 +70,14 @@ See Also:
     jlab_archiver_client.query.MySamplerQuery: Query builder for mysampler requests
     jlab_archiver_client.config: Configuration settings for archiver endpoints
 """  # noqa: E501
-from typing import Optional, Dict, Tuple
+import copy
+import importlib.metadata
+import json
+import os
+import warnings
+from datetime import datetime, timedelta, timezone
+from typing import Optional, Dict, Tuple, List
+from zoneinfo import ZoneInfo
 
 import numpy as np
 import pandas as pd
@@ -81,9 +89,22 @@ from jlab_archiver_client import utils
 from jlab_archiver_client.query import MySamplerQuery
 from jlab_archiver_client.config import config
 
-__all__ = ["MySampler"]
+__all__ = ["MySampler", "DEFAULT_PARQUET_CHUNK_SIZE", "PARQUET_QUERY_KEY", "PARQUET_METADATA_KEY",
+           "PARQUET_VERSION_KEY", "default_disconnects_path"]
 
 from jlab_archiver_client.utils import convert_multivalue_sample
+
+DEFAULT_PARQUET_CHUNK_SIZE = 100_000
+"""Default maximum number of samples requested at once by MySampler.run_to_parquet"""
+
+PARQUET_QUERY_KEY = "jlab_archiver_client.query"
+"""Parquet key-value metadata key holding the JSON description of the query that generated the file"""
+
+PARQUET_METADATA_KEY = "jlab_archiver_client.metadata"
+"""Parquet key-value metadata key holding the JSON channel metadata (data file only)"""
+
+PARQUET_VERSION_KEY = "jlab_archiver_client.version"
+"""Parquet key-value metadata key holding the JSON jlab_archiver_client version that wrote the file"""
 
 
 class MySampler:
@@ -132,29 +153,292 @@ class MySampler:
         Raises:
             RequestException when a problem making the query has occurred
         """
+        self.data, self.metadata, self.disconnects = self._fetch(self.query)
 
-        # Make the request
-        opts = self.query.to_web_params()
-        n_samples = int(opts["n"])
+    def run_to_parquet(self, path: str, chunk_size: int = DEFAULT_PARQUET_CHUNK_SIZE,
+                       disconnects_path: Optional[str] = None) -> None:
+        """Run the mysampler query in time chunks, streaming the results to parquet files.
+
+        The query is split into consecutive requests of at most chunk_size samples each, so memory usage is bounded by
+        the size of one chunk across all PVs rather than by the size of the full query.  Each chunk is written to the
+        data file as one row group, and its disconnect events are appended to the disconnects sidecar file.  Problems
+        with the query (e.g., unknown PVs) are reported by the first request, before most of the data is requested.
+
+        The data file has a "Date" column (stored as the pandas index) and one column per PV, matching the layout of
+        the data field produced by run().  The disconnects sidecar is in long format with columns "pv", "Date", and
+        "event".  Both files carry key-value metadata, each value a JSON string:
+
+            * jlab_archiver_client.query: the query that generated the file (both files)
+            * jlab_archiver_client.version: the jlab_archiver_client version that wrote the file (both files)
+            * jlab_archiver_client.metadata: channel metadata as found in the metadata field (data file only)
+
+        Files are written to temporary ".partial" paths and moved into place only once the whole query succeeds.  On
+        success, the metadata field holds the channel metadata.  The data and disconnects fields are left as None.
+
+        Args:
+            path: The output path of the data parquet file.
+            chunk_size: The maximum number of samples requested from the server at once.
+            disconnects_path: The output path of the disconnects sidecar parquet file.  Defaults to
+                              "<path stem>-disconnects.parquet".
+
+        Raises:
+            RequestException when a problem making the query has occurred
+            ImportError if pyarrow is not installed
+            ValueError if the arguments are invalid
+        """
+        pa, pq = _import_pyarrow()
+        disconnects_path = self._validate_parquet_args(path, chunk_size, disconnects_path)
+
+        server_timezone = config.server_timezone
+        chunk_queries = _chunk_queries(self.query, chunk_size, server_timezone)
+        common_metadata = {
+            PARQUET_QUERY_KEY: json.dumps(self._describe_query(chunk_size, server_timezone), default=str),
+            PARQUET_VERSION_KEY: json.dumps(_package_version()),
+        }
+
+        date_type = pa.int64() if self.query.unix_timestamps_ms else pa.timestamp("ns")
+        disconnects_schema = pa.schema([("pv", pa.string()), ("Date", date_type), ("event", pa.string())],
+                                       metadata=common_metadata)
+
+        data_tmp = f"{path}.partial"
+        disconnects_tmp = f"{disconnects_path}.partial"
+        data_writer = None
+        disconnects_writer = None
+        metadata = None
+        success = False
+        try:
+            disconnects_writer = pq.ParquetWriter(disconnects_tmp, disconnects_schema)
+            data_schema = None
+            for chunk_query in chunk_queries:
+                df, chunk_metadata, chunk_disconnects = self._fetch(chunk_query)
+
+                if data_schema is None:
+                    data_schema = _data_schema(pa, df, chunk_metadata, self.query)
+                table = pa.Table.from_pandas(df, schema=data_schema, preserve_index=True)
+                if data_writer is None:
+                    data_writer = pq.ParquetWriter(data_tmp,
+                                                   table.schema.with_metadata({**table.schema.metadata,
+                                                                               **common_metadata}))
+                data_writer.write_table(table)
+
+                disconnects_table = _disconnects_table(pa, chunk_disconnects, disconnects_schema,
+                                                       self.query.unix_timestamps_ms)
+                if disconnects_table.num_rows > 0:
+                    disconnects_writer.write_table(disconnects_table)
+
+                metadata = _merge_metadata(metadata, chunk_metadata)
+
+            # Channel metadata is complete only after the last chunk.  Note that pyarrow exposes metadata added here via
+            # pq.read_metadata(path).metadata, but not via pq.read_schema(path).metadata.
+            data_writer.add_key_value_metadata({
+                PARQUET_METADATA_KEY: json.dumps(utils.json_normalize(metadata), default=str),
+            })
+            success = True
+        finally:
+            for writer in (data_writer, disconnects_writer):
+                if writer is not None:
+                    writer.close()
+            if not success:
+                for tmp in (data_tmp, disconnects_tmp):
+                    if os.path.exists(tmp):
+                        os.remove(tmp)
+
+        os.replace(data_tmp, path)
+        os.replace(disconnects_tmp, disconnects_path)
+        self.metadata = metadata
+
+    def _validate_parquet_args(self, path: str, chunk_size: int, disconnects_path: Optional[str]) -> str:
+        """Check the run_to_parquet arguments and return the disconnects sidecar path to use."""
+        if chunk_size < 1:
+            raise ValueError("chunk_size must be at least 1")
+        if self.query.num_samples < 1:
+            raise ValueError("num_samples must be at least 1 to write parquet output")
+        if disconnects_path is None:
+            disconnects_path = default_disconnects_path(path)
+        if os.path.abspath(path) == os.path.abspath(disconnects_path):
+            raise ValueError("path and disconnects_path must be different files")
+        return disconnects_path
+
+    def _fetch(self, query: MySamplerQuery) -> Tuple[pd.DataFrame, Dict[str, dict], Dict[str, pd.Series]]:
+        """Make a single mysampler request and parse the response.
+
+        Args:
+            query: The query to run.  May differ from self.query when a query is split into chunks.
+
+        Raises:
+            RequestException when a problem making the query has occurred
+        """
+        opts = query.to_web_params()
+        sig_figs = int(opts["v"]) if "v" in opts else 6
         with requests.get(self.url, params=opts, stream=True) as r:
             if r.status_code != requests.codes.ok:
                 raise RequestException(r.status_code)
-            if 'v' in opts:
-                self.data, self.metadata, self.disconnects = _parse_json_iteratively(
-                    r,
-                    num_samples=n_samples,
-                    enums_as_strings=self.query.enums_as_strings,
-                    sig_figs=int(opts["v"]),
-                    unix_timestamps_ms=self.query.unix_timestamps_ms,
-                )
-            else:
-                self.data, self.metadata, self.disconnects = _parse_json_iteratively(
-                    r,
-                    num_samples=n_samples,
-                    enums_as_strings=self.query.enums_as_strings,
-                    sig_figs=6,
-                    unix_timestamps_ms=self.query.unix_timestamps_ms,
-                )
+            return _parse_json_iteratively(
+                r,
+                num_samples=int(opts["n"]),
+                enums_as_strings=query.enums_as_strings,
+                sig_figs=sig_figs,
+                unix_timestamps_ms=query.unix_timestamps_ms,
+            )
+
+    def _describe_query(self, chunk_size: int, server_timezone: str) -> Dict[str, object]:
+        """Describe the query and how it was run for storing alongside output files."""
+        with warnings.catch_warnings():
+            # to_web_params warns about extra_opts, which the user has already been warned about.
+            warnings.simplefilter("ignore")
+            web_params = self.query.to_web_params()
+        return {
+            "endpoint": "mysampler",
+            "url": self.url,
+            "query": self.query.to_dict(),
+            "web_params": web_params,
+            "chunk_size": chunk_size,
+            "server_timezone": server_timezone,
+        }
+
+
+def default_disconnects_path(path: str) -> str:
+    """Get the default disconnects sidecar path for a data file path, i.e., <path stem>-disconnects.parquet"""
+    stem, ext = os.path.splitext(path)
+    if ext.lower() != ".parquet":
+        stem = path
+    return f"{stem}-disconnects.parquet"
+
+
+def _import_pyarrow():
+    """Import pyarrow, which is only needed for parquet output."""
+    try:
+        import pyarrow as pa  # noqa: PLC0415
+        import pyarrow.parquet as pq  # noqa: PLC0415
+    except ImportError as e:
+        raise ImportError("Parquet output requires pyarrow.  Install it with "
+                          "'pip install jlab_archiver_client[parquet]'.") from e
+    return pa, pq
+
+
+def _package_version() -> Optional[str]:
+    """Get the installed jlab_archiver_client version."""
+    try:
+        return importlib.metadata.version("jlab_archiver_client")
+    except importlib.metadata.PackageNotFoundError:
+        return None
+
+
+def _format_start(wall_time: datetime) -> str:
+    """Format a wall-clock time as a MySamplerQuery start string, keeping milliseconds only when needed."""
+    if wall_time.microsecond:
+        return wall_time.isoformat(sep=" ", timespec="milliseconds")
+    return wall_time.isoformat(sep=" ")
+
+
+def _chunk_queries(query: MySamplerQuery, chunk_size: int, server_timezone: str) -> List[MySamplerQuery]:
+    """Split a mysampler query into consecutive queries of at most chunk_size samples.
+
+    myquery takes the start time as a wall-clock time in the server's timezone and places samples at fixed intervals
+    of absolute time.  Chunk start times are therefore computed in absolute time and converted back to wall-clock time
+    so that the chunks reproduce the sample times of the original query across daylight saving time transitions.
+
+    When clocks fall back, wall-clock times are repeated and myquery interprets them as their first occurrence, so a
+    chunk can not start during the second occurrence.  Chunk boundaries that land there are pushed forward to the
+    first sample that can be requested, making the chunk before it larger than chunk_size.
+
+    Args:
+        query: The query to split
+        chunk_size: The maximum number of samples per chunk (except as noted above)
+        server_timezone: The IANA timezone the myquery server uses to interpret start times
+    """
+    tz = ZoneInfo(server_timezone)
+    num_samples = query.num_samples
+    # myquery interprets ambiguous start times as their first occurrence, the same as fold=0.
+    start_utc = datetime.fromisoformat(query.start).replace(tzinfo=tz).astimezone(timezone.utc)
+    step = timedelta(milliseconds=query.interval)
+
+    # (first sample index, start string) of each chunk
+    bounds = [(0, query.start)]
+    idx = chunk_size
+    while idx < num_samples:
+        local = (start_utc + idx * step).astimezone(tz)
+        if local.fold == 1 and local.replace(fold=0).utcoffset() != local.utcoffset():
+            # Second occurrence of a repeated wall-clock time - not something myquery can be asked for.
+            idx += 1
+            continue
+        bounds.append((idx, _format_start(local.replace(tzinfo=None))))
+        idx += chunk_size
+
+    out = []
+    for i, (first, start) in enumerate(bounds):
+        end = bounds[i + 1][0] if i + 1 < len(bounds) else num_samples
+        chunk = copy.copy(query)
+        chunk.start = start
+        chunk.num_samples = end - first
+        out.append(chunk)
+    return out
+
+
+def _data_schema(pa, df: pd.DataFrame, metadata: Dict[str, dict], query: MySamplerQuery):
+    """Build the arrow schema for the data file from channel metadata.
+
+    The schema is fixed from metadata rather than inferred from the data so that every chunk has the same schema, even
+    when a chunk only contains missing values for a PV.  The Date index field goes last, where pandas places index
+    columns.  Otherwise, pyarrow records the wrong pandas dtypes and nullable integer columns are not restored on read.
+    """
+    sig_figs = int(query.sig_figs) if query.sig_figs is not None else 6
+    fields = []
+    for name in df.columns:
+        channel_metadata = metadata[name]["metadata"]
+        new_type = utils.get_data_types(metadata=channel_metadata, enums_as_strings=query.enums_as_strings,
+                                        sig_figs=sig_figs)
+        arrow_type = pa.string() if new_type is str else pa.from_numpy_dtype(np.dtype(new_type))
+        if channel_metadata["datasize"] != 1:
+            arrow_type = pa.list_(arrow_type)
+        fields.append(pa.field(name, arrow_type))
+    fields.append(pa.field("Date", pa.int64() if query.unix_timestamps_ms else pa.timestamp("ns")))
+    return pa.schema(fields)
+
+
+def _disconnects_table(pa, disconnects: Dict[str, pd.Series], schema, unix_timestamps_ms: bool):
+    """Convert a chunk's disconnects into a long-format arrow table with pv, Date, and event columns."""
+    pvs = []
+    dates = []
+    events = []
+    for pv, series in disconnects.items():
+        pvs.extend([pv] * len(series))
+        dates.extend(series.index)
+        events.extend(series.values)
+
+    if unix_timestamps_ms:
+        date_values = np.asarray(dates, dtype="int64")
+    else:
+        date_values = pd.to_datetime(dates).to_numpy(dtype="datetime64[ns]")
+
+    return pa.table({
+        "pv": pa.array(pvs, type=pa.string()),
+        "Date": pa.array(date_values, type=schema.field("Date").type),
+        "event": pa.array(events, type=pa.string()),
+    }, schema=schema)
+
+
+def _merge_metadata(merged: Optional[Dict[str, dict]], chunk: Dict[str, dict]) -> Dict[str, dict]:
+    """Combine channel metadata from one chunk into the metadata of the chunks before it.
+
+    returnCount is summed across chunks, and enum label sets are combined without duplicates.
+    """
+    if merged is None:
+        return copy.deepcopy(chunk)
+
+    for name, channel in chunk.items():
+        target = merged[name]
+        target["returnCount"] = target.get("returnCount", 0) + channel.get("returnCount", 0)
+        if "labels" in channel:
+            labels = target.setdefault("labels", [])
+            known = [json.dumps(label, sort_keys=True, default=str) for label in labels]
+            for label in channel["labels"]:
+                key = json.dumps(label, sort_keys=True, default=str)
+                if key not in known:
+                    labels.append(copy.deepcopy(label))
+                    known.append(key)
+    return merged
+
 
 def _parse_json_iteratively(response: requests.Response, num_samples: int, # noqa: PLR0912, PLR0915
                             enums_as_strings: bool, sig_figs: int | None, unix_timestamps_ms: bool,

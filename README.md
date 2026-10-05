@@ -24,6 +24,7 @@ The package supports multiple myquery endpoints:
 - **Thread-Safe Config**: Runtime configuration changes supported
 - **History Deployment**: Defaults to Jefferson Lab's read-only history deployment
 - **Command Line Interface**: Command-line tools for quick queries
+- **Parquet Streaming**: Stream large mysampler queries to parquet files in time chunks with bounded memory use
 
 ## API Documentation
 Documentation can be found [here](https://jeffersonlab.github.io/jlab_archiver_client/)
@@ -38,6 +39,9 @@ Documentation can be found [here](https://jeffersonlab.github.io/jlab_archiver_c
 
 ```bash
 pip install jlab_archiver_client
+
+# Include optional support for streaming mysampler results to parquet files
+pip install jlab_archiver_client[parquet]
 ```
 
 ## Developer Quick Start Guide
@@ -165,6 +169,103 @@ print(mysampler.metadata)
 {'R12XGMES': {'metadata': {'name': 'R12XGMES', 'datatype': 'DBR_DOUBLE', 'datasize': 1, 'datahost': 'hstmya3', 'ioc': None, 'active': True}, 'returnCount': 15}, 'R13XGMES': {'metadata': {'name': 'R13XGMES', 'datatype': 'DBR_DOUBLE', 'datasize': 1, 'datahost': 'hstmya0', 'ioc': None, 'active': True}, 'returnCount': 15}}
 
 ```
+
+### MySampler - Streaming to Parquet
+
+`MySampler.run()` holds the full result in memory.  For large queries, `MySampler.run_to_parquet()` instead splits
+the query into time chunks of at most `chunk_size` samples, requests them one at a time, and writes each chunk to disk
+before requesting the next.  Memory use is bounded by one chunk across all PVs, and problems such as an unknown PV are
+reported by the first request rather than after most of the data has been transferred.  This requires `pyarrow`
+(`pip install jlab_archiver_client[parquet]`).
+
+```python
+from jlab_archiver_client import MySampler, MySamplerQuery
+from datetime import datetime
+
+query = MySamplerQuery(
+    start=datetime.strptime("2019-08-12 00:00:00", "%Y-%m-%d %H:%M:%S"),
+    interval=1_800_000,  # 30 minutes in milliseconds
+    num_samples=15,
+    pvlist=["channel1", "channel2"],
+)
+
+# Writes samples.parquet and samples-disconnects.parquet
+MySampler(query).run_to_parquet("samples.parquet", chunk_size=100_000)
+```
+
+Two files are written.  Files are only moved into place once the whole query succeeds, so a failed query leaves no
+partial output.
+
+| File                          | Contents                                                                                                                          |
+|-------------------------------|-----------------------------------------------------------------------------------------------------------------------------------|
+| `samples.parquet`             | The same table as `MySampler.data`: a `Date` index and one column per PV.  Each chunk is one row group.                           |
+| `samples-disconnects.parquet` | Disconnect events (the contents of `MySampler.disconnects`) in long format, with `pv`, `Date`, and `event` columns.                |
+
+Both files include key-value metadata entries whose values are JSON strings.
+
+| Key                              | Data file | Disconnects file | Contents                                                                                |
+|----------------------------------|-----------|------------------|-----------------------------------------------------------------------------------------|
+| `jlab_archiver_client.query`     | Yes       | Yes              | The query that generated the file: query parameters, web parameters, URL, chunk size    |
+| `jlab_archiver_client.version`   | Yes       | Yes              | The jlab_archiver_client version that wrote the file                                    |
+| `jlab_archiver_client.metadata`  | Yes       | No               | Channel metadata, the same as `MySampler.metadata`                                      |
+
+Read the files back with pandas, and read their metadata with `pyarrow.parquet.read_metadata`.  Use `read_metadata`
+rather than `read_schema`, since the channel metadata is added when the data file is closed and is not part of the
+stored arrow schema.
+
+```python
+import json
+import pandas as pd
+import pyarrow.parquet as pq
+
+# Data - the dtypes match MySampler.data (e.g., float32, nullable Int16 for enums)
+data = pd.read_parquet("samples.parquet")
+print(data.head())
+                      channel1  channel2
+Date                                    
+2019-08-12 00:00:00        NaN      <NA>
+2019-08-12 00:30:00  95.970596      <NA>
+2019-08-12 01:00:00  95.303299         3
+2019-08-12 01:30:00  94.359398         3
+2019-08-12 02:00:00  94.811401         3
+
+# Disconnect events from the sidecar file
+disconnects = pd.read_parquet("samples-disconnects.parquet")
+print(disconnects)
+         pv                Date      event
+0  channel1 2019-08-12 00:00:00  UNDEFINED
+1  channel2 2019-08-12 00:00:00  UNDEFINED
+2  channel2 2019-08-12 00:30:00  UNDEFINED
+
+# Disconnect events for a single PV
+print(disconnects[disconnects.pv == "channel2"].set_index("Date").event)
+
+# Metadata from the data file
+data_kv = pq.read_metadata("samples.parquet").metadata
+query_info = json.loads(data_kv[b"jlab_archiver_client.query"])
+channel_metadata = json.loads(data_kv[b"jlab_archiver_client.metadata"])
+version = json.loads(data_kv[b"jlab_archiver_client.version"])
+
+print(query_info["query"])
+{'start': '2019-08-12 00:00:00', 'interval': 1800000, 'num_samples': 15, 'pvlist': ['channel1', 'channel2'], 'deployment': 'history', 'sample_strategy': 'stream', 'frac_time_digits': 9, 'sig_figs': 6, 'data_updates_only': False, 'enums_as_strings': False, 'unix_timestamps_ms': False, 'adjust_time_to_server_offset': False, 'extra_opts': {}}
+print(query_info["web_params"])
+{'c': 'channel1,channel2', 'b': '2019-08-12T00:00:00', 'n': 15, 'm': 'history', 's': 1800000, 'x': 's', 'f': 9, 'v': 6}
+print(channel_metadata["channel2"])
+{'metadata': {'name': 'channel2', 'datatype': 'DBR_ENUM', 'datasize': 1, 'datahost': 'mya', 'ioc': None, 'active': True}, 'labels': [{'d': '2016-08-12 13:00:49.000000000', 'value': ['BEAM SYNC ONLY', 'PULSE MODE VL', 'TUNE MODE', 'CW MODE (DC)', 'USER MODE']}], 'returnCount': 15}
+
+# Metadata from the disconnects file - the same query description
+sidecar_kv = pq.read_metadata("samples-disconnects.parquet").metadata
+sidecar_query_info = json.loads(sidecar_kv[b"jlab_archiver_client.query"])
+print(sidecar_query_info == query_info)
+True
+```
+
+Chunk start times are computed in absolute time so that chunked queries return the same sample times as a single
+query across daylight saving time transitions.  This uses the timezone of the myquery server, which defaults to
+`America/New_York` and can be changed with `config.set(server_timezone=...)`.  myquery cannot be asked to start a
+query during the repeated hour when clocks fall back, so a chunk boundary that lands there is moved to the end of that
+hour.
+
 
 ### Interval - All Events in Time Range
 
@@ -311,3 +412,15 @@ This package includes command-line tools for quick queries.  After installation,
 | `jac-mystats`                    | Compute statistical aggregations over time bins          |
 | `jac-point`                      | Retrieve a single event at or near a specific time       |
 | `jac-channel`                    | Search and discover available channel names and metadata |
+
+`jac-mysampler` streams its results to parquet when the output file ends in `.parquet`.  See
+[MySampler - Streaming to Parquet](#mysampler---streaming-to-parquet) for the file layout and how to read the files.
+
+```bash
+# Writes samples.parquet and samples-disconnects.parquet
+jac-mysampler -c channel1 channel2 -b "2019-08-12 00:00:00" -i 1800000 -n 15 -o samples.parquet
+
+# Set the number of samples per request and the disconnects file path
+jac-mysampler -c channel1 channel2 -b "2019-08-12 00:00:00" -i 1000 -n 10000000 -o samples.parquet \
+    --chunk-size 50000 --disconnects-output events.parquet
+```

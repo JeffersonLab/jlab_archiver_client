@@ -12,7 +12,7 @@ Available Commands:
     * jac-channel: Search for channel names using SQL patterns
 
 Each command supports JSON or CSV output and can be configured to use different
-myquery server deployments.
+myquery server deployments.  jac-mysampler can also stream its output to parquet files.
 
 Example::
 
@@ -21,6 +21,9 @@ Example::
 
     # Query sampled data for multiple channels
     $ jac-mysampler -c channel1 channel2 -b "2019-08-12 00:00:00" -i 60000 -n 100 -o output.csv
+
+    # Stream sampled data to parquet (writes output.parquet and output-disconnects.parquet)
+    $ jac-mysampler -c channel1 channel2 -b "2019-08-12 00:00:00" -i 60000 -n 100 -o output.parquet
 
     # Get statistics for channels
     $ jac-mystats -c channel1 channel2 -b "2019-08-12 00:00:00" -e "2019-08-13 00:00:00" --num-bins 24 -o output.csv
@@ -48,7 +51,7 @@ from jlab_archiver_client.query import (
     DEFAULT_SIG_FIGS
 )
 from jlab_archiver_client.interval import Interval
-from jlab_archiver_client.mysampler import MySampler
+from jlab_archiver_client.mysampler import MySampler, DEFAULT_PARQUET_CHUNK_SIZE, default_disconnects_path
 from jlab_archiver_client.mystats import MyStats
 from jlab_archiver_client.point import Point
 from jlab_archiver_client.channel import Channel
@@ -219,6 +222,21 @@ def interval_main():
         sys.exit(1)
 
 
+def _mysampler_to_parquet(mysampler: MySampler, output: str, chunk_size: int, disconnects_output: Optional[str]):
+    """Stream a mysampler query to a data parquet file and a disconnects sidecar parquet file.
+
+    Args:
+        mysampler: The MySampler to run
+        output: The data parquet file path
+        chunk_size: The maximum number of samples requested at once
+        disconnects_output: The disconnects sidecar file path.  The default sidecar path is used if None.
+    """
+    if disconnects_output is None:
+        disconnects_output = default_disconnects_path(output)
+    mysampler.run_to_parquet(output, chunk_size=chunk_size, disconnects_path=disconnects_output)
+    print(f"Successfully saved results to {output} and {disconnects_output}")
+
+
 def mysampler_main():
     """Command-line interface for the mysampler endpoint.
 
@@ -238,7 +256,15 @@ def mysampler_main():
     parser.add_argument('-n', '--num-samples', required=True, type=int,
                         help='Number of samples to retrieve')
     parser.add_argument('-o', '--output', required=False, type=str, default=None,
-                        help='Output file path (.csv or .json). If not specified, outputs to stdout')
+                        help='Output file path (.csv, .json, or .parquet). If not specified, outputs to stdout. '
+                             '.parquet output is streamed to disk in chunks and writes disconnect events to a '
+                             'sidecar parquet file.')
+    parser.add_argument('--chunk-size', type=int, default=DEFAULT_PARQUET_CHUNK_SIZE,
+                        help='Maximum samples requested at once for .parquet output '
+                             f'(default: {DEFAULT_PARQUET_CHUNK_SIZE})')
+    parser.add_argument('--disconnects-output', type=str, default=None,
+                        help='Disconnects sidecar file path for .parquet output '
+                             '(default: <output stem>-disconnects.parquet)')
 
     # Optional query parameters
     parser.add_argument('-m', '--deployment', type=str, default='history',
@@ -299,6 +325,10 @@ def mysampler_main():
     # Execute query
     try:
         mysampler = MySampler(query)
+        if args.output is not None and args.output.endswith('.parquet'):
+            _mysampler_to_parquet(mysampler, args.output, args.chunk_size, args.disconnects_output)
+            return
+
         mysampler.run()
 
         # Save output
@@ -323,7 +353,7 @@ def mysampler_main():
             mysampler.data.index = format_index_ns(mysampler.data.index, args.frac_time_digits)
             mysampler.data.to_csv(args.output, float_format='%#.' + str(args.sig_figs) + 'g')
         else:
-            print("Error: Output file must be .csv or .json", file=sys.stderr)
+            print("Error: Output file must be .csv, .json, or .parquet", file=sys.stderr)
             sys.exit(1)
 
     except Exception as e:

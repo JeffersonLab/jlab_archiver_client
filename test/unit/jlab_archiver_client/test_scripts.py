@@ -17,6 +17,7 @@ from jlab_archiver_client.scripts import (
     channel_main
 )
 from jlab_archiver_client.config import config
+from jlab_archiver_client.mysampler import DEFAULT_PARQUET_CHUNK_SIZE
 
 
 class TestParseDatetime(unittest.TestCase):
@@ -425,6 +426,103 @@ class TestMySamplerMain(unittest.TestCase):
         query = call_args[0][0]
 
         self.assertEqual("stream", query.sample_strategy)
+
+    @patch('jlab_archiver_client.scripts.MySampler')
+    @patch('sys.argv')
+    def test_mysampler_main_parquet_output_defaults(self, mock_argv, mock_mysampler_class):
+        """Test mysampler_main streams .parquet output with the default chunk size and sidecar path."""
+        mock_argv.__getitem__ = lambda s, i: [
+            'jac-mysampler',
+            '-c', 'channel1', 'channel2',
+            '-b', '2023-05-09 12:00:00',
+            '-i', '1000',
+            '-n', '100',
+            '-o', 'out/test.parquet'
+        ][i]
+
+        mock_mysampler = MagicMock()
+        mock_mysampler_class.return_value = mock_mysampler
+
+        with patch('sys.stdout', new_callable=StringIO) as mock_stdout:
+            mysampler_main()
+
+        mock_mysampler.run.assert_not_called()
+        mock_mysampler.run_to_parquet.assert_called_once_with('out/test.parquet',
+                                                              chunk_size=DEFAULT_PARQUET_CHUNK_SIZE,
+                                                              disconnects_path='out/test-disconnects.parquet')
+        self.assertIn("Successfully saved results to out/test.parquet and out/test-disconnects.parquet",
+                      mock_stdout.getvalue())
+
+    @patch('jlab_archiver_client.scripts.MySampler')
+    @patch('sys.argv')
+    def test_mysampler_main_parquet_output_options(self, mock_argv, mock_mysampler_class):
+        """Test mysampler_main passes --chunk-size and --disconnects-output through for .parquet output."""
+        mock_argv.__getitem__ = lambda s, i: [
+            'jac-mysampler',
+            '-c', 'channel1',
+            '-b', '2023-05-09 12:00:00',
+            '-i', '1000',
+            '-n', '100',
+            '-o', 'test.parquet',
+            '--chunk-size', '25',
+            '--disconnects-output', 'events.parquet'
+        ][i]
+
+        mock_mysampler = MagicMock()
+        mock_mysampler_class.return_value = mock_mysampler
+
+        with patch('sys.stdout', new_callable=StringIO):
+            mysampler_main()
+
+        mock_mysampler.run.assert_not_called()
+        mock_mysampler.run_to_parquet.assert_called_once_with('test.parquet', chunk_size=25,
+                                                              disconnects_path='events.parquet')
+
+    @patch('jlab_archiver_client.scripts.MySampler')
+    @patch('sys.argv')
+    @patch('sys.exit')
+    def test_mysampler_main_parquet_error(self, mock_exit, mock_argv, mock_mysampler_class):
+        """Test mysampler_main reports errors raised while streaming .parquet output."""
+        mock_argv.__getitem__ = lambda s, i: [
+            'jac-mysampler',
+            '-c', 'channel1',
+            '-b', '2023-05-09 12:00:00',
+            '-i', '1000',
+            '-n', '100',
+            '-o', 'test.parquet'
+        ][i]
+
+        mock_mysampler = MagicMock()
+        mock_mysampler.run_to_parquet.side_effect = RuntimeError("boom")
+        mock_mysampler_class.return_value = mock_mysampler
+
+        with patch('sys.stderr', new_callable=StringIO) as mock_stderr:
+            mysampler_main()
+
+        mock_exit.assert_called_with(1)
+        self.assertIn("Error executing query: boom", mock_stderr.getvalue())
+
+    @patch('jlab_archiver_client.scripts.MySampler')
+    @patch('sys.argv')
+    @patch('sys.exit')
+    def test_mysampler_main_invalid_output_extension(self, mock_exit, mock_argv, mock_mysampler_class):
+        """Test mysampler_main rejects unsupported output file extensions."""
+        mock_argv.__getitem__ = lambda s, i: [
+            'jac-mysampler',
+            '-c', 'channel1',
+            '-b', '2023-05-09 12:00:00',
+            '-i', '1000',
+            '-n', '100',
+            '-o', 'test.txt'
+        ][i]
+
+        mock_mysampler_class.return_value = MagicMock()
+
+        with patch('sys.stderr', new_callable=StringIO) as mock_stderr:
+            mysampler_main()
+
+        mock_exit.assert_called_with(1)
+        self.assertIn("Output file must be .csv, .json, or .parquet", mock_stderr.getvalue())
 
 
 class TestMyStatsMain(unittest.TestCase):

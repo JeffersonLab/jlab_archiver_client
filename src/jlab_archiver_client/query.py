@@ -275,6 +275,27 @@ class MySamplerQuery(Query):
 
         return out
 
+    def to_dict(self) -> Dict[str, Any]:
+        """Describe the query as a JSON-serializable dictionary.  Used to record the query that produced output files.
+
+        Extra options are reported as given, so they should be JSON-serializable if this is to be saved as JSON.
+        """
+        return {
+            "start": self.start,
+            "interval": self.interval,
+            "num_samples": self.num_samples,
+            "pvlist": list(self.pvlist),
+            "deployment": self.deployment,
+            "sample_strategy": self.sample_strategy,
+            "frac_time_digits": self.frac_time_digits,
+            "sig_figs": self.sig_figs,
+            "data_updates_only": self.data_updates_only,
+            "enums_as_strings": self.enums_as_strings,
+            "unix_timestamps_ms": self.unix_timestamps_ms,
+            "adjust_time_to_server_offset": self.adjust_time_to_server_offset,
+            "extra_opts": dict(self.extra_opts) if self.extra_opts else {},
+        }
+
 
 class ChannelQuery(Query):
     """A class for containing the arguments needed by myquery's channel endpoint."""

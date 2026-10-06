@@ -1,0 +1,206 @@
+# docsrc/source/_templates/layout.html
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>jlab_archiver_client.query &mdash; jlab_archiver_client 1.1.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=fc837d61"></script>
+      <script src="../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="&lt;no title&gt;" href="jlab_archiver_client.query.ChannelQuery.html" />
+    <link rel="prev" title="&lt;no title&gt;" href="jlab_archiver_client.point.Point.html" />
+<!--suppress ALL -->
+<link href="../_static/rtd_custom.css" rel="stylesheet" type="text/css">
+
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            jlab_archiver_client
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="jlab_archiver_client.html">jlab_archiver_client</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="jlab_archiver_client.channel.html">jlab_archiver_client.channel</a></li>
+<li class="toctree-l2"><a class="reference internal" href="jlab_archiver_client.config.html">jlab_archiver_client.config</a></li>
+<li class="toctree-l2"><a class="reference internal" href="jlab_archiver_client.exceptions.html">jlab_archiver_client.exceptions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="jlab_archiver_client.interval.html">jlab_archiver_client.interval</a></li>
+<li class="toctree-l2"><a class="reference internal" href="jlab_archiver_client.mysampler.html">jlab_archiver_client.mysampler</a></li>
+<li class="toctree-l2"><a class="reference internal" href="jlab_archiver_client.mystats.html">jlab_archiver_client.mystats</a></li>
+<li class="toctree-l2"><a class="reference internal" href="jlab_archiver_client.point.html">jlab_archiver_client.point</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">jlab_archiver_client.query</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="jlab_archiver_client.query.ChannelQuery.html"><code class="docutils literal notranslate"><span class="pre">ChannelQuery</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="jlab_archiver_client.query.IntervalQuery.html"><code class="docutils literal notranslate"><span class="pre">IntervalQuery</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="jlab_archiver_client.query.MySamplerQuery.html"><code class="docutils literal notranslate"><span class="pre">MySamplerQuery</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="jlab_archiver_client.query.MyStatsQuery.html"><code class="docutils literal notranslate"><span class="pre">MyStatsQuery</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="jlab_archiver_client.query.PointQuery.html"><code class="docutils literal notranslate"><span class="pre">PointQuery</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="jlab_archiver_client.query.Query.html"><code class="docutils literal notranslate"><span class="pre">Query</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="jlab_archiver_client.scripts.html">jlab_archiver_client.scripts</a></li>
+<li class="toctree-l2"><a class="reference internal" href="jlab_archiver_client.utils.html">jlab_archiver_client.utils</a></li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">jlab_archiver_client</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="jlab_archiver_client.html">jlab_archiver_client</a></li>
+      <li class="breadcrumb-item active">jlab_archiver_client.query</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/_autosummary/jlab_archiver_client.query.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="module-jlab_archiver_client.query">
+<span id="jlab-archiver-client-query"></span><h1>jlab_archiver_client.query<a class="headerlink" href="#module-jlab_archiver_client.query" title="Link to this heading"></a></h1>
+<p>Query builder classes for Jefferson Lab Archiver myquery endpoints.</p>
+<p>This module provides query builder classes for constructing requests to various
+Jefferson Lab Archiver myquery service endpoints. Each query class encapsulates
+the parameters needed for a specific endpoint and handles conversion to web
+request parameters.</p>
+<p>The query classes serve as parameter containers that are passed to their
+corresponding client classes (MySampler, MyStats, Interval, Point, Channel)
+which execute the queries and process the results.</p>
+<p>Many query classes allow the user to specify the timestamp precision and the
+number of significant figures reported for numeric data.  The number of
+significant figures is set to 6, similar to myquery.  The
+timestamp precision by default is set to nanoseconds, but this can be
+overridden by the user.  Since DataFrame indexes are typically built on the
+timestamp, these should be unique. MYA typically captures event timestamps at
+a precision less than nanoseconds, so this should ensure that timestamps are
+unique.  However, advanced users may have reasons to request a lower precision,
+e.g., lower memory usage.</p>
+<dl class="simple">
+<dt>Key Features:</dt><dd><ul class="simple">
+<li><p>Type-safe query parameter validation</p></li>
+<li><p>Automatic conversion to myquery web API format</p></li>
+<li><p>Support for all major myquery endpoints</p></li>
+<li><p>Extensible via kwargs for future API changes</p></li>
+<li><p>Consistent interface across different query types</p></li>
+</ul>
+</dd>
+<dt>Classes:</dt><dd><p>Query: Abstract base class for all query types.
+IntervalQuery: Query for retrieving all events in a time range from the interval end point.
+MySamplerQuery: Query for regularly sampled data across multiple PVs from the mysampler endpoint.
+MyStatsQuery: Query for statistical aggregations over time bins from the mystats endpoint.
+ChannelQuery: Query for searching/discovering channel names from the channel endpoint.
+PointQuery: Query for retrieving a single event at a specific time from the point endpoint.</p>
+</dd>
+</dl>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>All query classes support additional parameters via **kwargs to allow for
+future API extensions. Using kwargs will generate a warning to prevent
+accidental misuse.</p>
+</div>
+<div class="admonition seealso">
+<p class="admonition-title">See also</p>
+<ul class="simple">
+<li><p>jlab_archiver_client.mysampler: MySampler client for MySamplerQuery</p></li>
+<li><p>jlab_archiver_client.mystats: MyStats client for MyStatsQuery</p></li>
+<li><p>jlab_archiver_client.interval: Interval client for IntervalQuery</p></li>
+<li><p>jlab_archiver_client.point: Point client for PointQuery</p></li>
+<li><p>jlab_archiver_client.channel: Channel client for ChannelQuery</p></li>
+</ul>
+</div>
+<p class="rubric">Classes</p>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="jlab_archiver_client.query.ChannelQuery.html#jlab_archiver_client.query.ChannelQuery" title="jlab_archiver_client.query.ChannelQuery"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ChannelQuery</span></code></a>(pattern[, limit, offset, ...])</p></td>
+<td><p>A class for containing the arguments needed by myquery's channel endpoint.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="jlab_archiver_client.query.IntervalQuery.html#jlab_archiver_client.query.IntervalQuery" title="jlab_archiver_client.query.IntervalQuery"><code class="xref py py-obj docutils literal notranslate"><span class="pre">IntervalQuery</span></code></a>(channel, begin, end[, ...])</p></td>
+<td><p>A class for holding the parameters of an interval myquery call</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="jlab_archiver_client.query.MySamplerQuery.html#jlab_archiver_client.query.MySamplerQuery" title="jlab_archiver_client.query.MySamplerQuery"><code class="xref py py-obj docutils literal notranslate"><span class="pre">MySamplerQuery</span></code></a>(start, interval, num_samples, ...)</p></td>
+<td><p>A class for containing the arguments needed by mySampler.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="jlab_archiver_client.query.MyStatsQuery.html#jlab_archiver_client.query.MyStatsQuery" title="jlab_archiver_client.query.MyStatsQuery"><code class="xref py py-obj docutils literal notranslate"><span class="pre">MyStatsQuery</span></code></a>(pvlist, start, end[, num_bins, ...])</p></td>
+<td><p>A class for containing the arguments needed by mystats endpoint.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="jlab_archiver_client.query.PointQuery.html#jlab_archiver_client.query.PointQuery" title="jlab_archiver_client.query.PointQuery"><code class="xref py py-obj docutils literal notranslate"><span class="pre">PointQuery</span></code></a>(channel, time[, deployment, ...])</p></td>
+<td><p>A class for holding the parameters of an interval myquery call</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="jlab_archiver_client.query.Query.html#jlab_archiver_client.query.Query" title="jlab_archiver_client.query.Query"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Query</span></code></a>()</p></td>
+<td><p>An abstract base class to be used by various mya utility wrappers.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="jlab_archiver_client.point.Point.html" class="btn btn-neutral float-left" title="&lt;no title&gt;" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="jlab_archiver_client.query.ChannelQuery.html" class="btn btn-neutral float-right" title="&lt;no title&gt;" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright .</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

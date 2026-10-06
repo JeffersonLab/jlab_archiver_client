@@ -1,0 +1,27 @@
+# docsrc/source/_templates/custom-class-template.rst
+jlab\_archiver\_client.query.IntervalQuery
+==========================================
+
+.. currentmodule:: jlab_archiver_client.query
+
+.. autoclass:: IntervalQuery
+   :members:
+   :show-inheritance:
+   :inherited-members:
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~IntervalQuery.__init__
+      ~IntervalQuery.to_web_params
+   
+   
+
+   
+   
+   

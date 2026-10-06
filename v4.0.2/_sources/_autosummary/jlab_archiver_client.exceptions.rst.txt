@@ -1,0 +1,30 @@
+jlab\_archiver\_client.exceptions
+=================================
+
+.. automodule:: jlab_archiver_client.exceptions
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Exceptions
+
+   .. autosummary::
+      :toctree:
+   
+      MyqueryException
+   
+   
+
+
+

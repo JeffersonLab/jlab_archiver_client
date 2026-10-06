@@ -166,6 +166,12 @@ print(mysampler.metadata)
 
 ```
 
+MySampler always transfers timestamps from myquery as milliseconds since the unix epoch, which are unambiguous.  The
+`unix_timestamps_ms` query option only controls how they are presented: as those milliseconds (`int64`), or by default
+as `datetime64[ns]` in the myquery server's local time.  The server's timezone defaults to `America/New_York` and can be
+changed with `config.set(server_timezone=...)`.  Local times repeat when clocks fall back, so use `unix_timestamps_ms=True`
+when you need a unique index across that hour.
+
 ### Interval - All Events in Time Range
 
 Retrieve all archived events for a single PV. Best for detailed event history.  Also includes option to run multiple interval queries in parallel and return combined results.  This results in a single DataFrame with a row for each timestamp that any *single* channel updated.

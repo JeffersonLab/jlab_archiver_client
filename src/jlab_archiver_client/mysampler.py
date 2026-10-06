@@ -134,28 +134,81 @@ class MySampler:
             be queried (e.g., it is not archived).
         """
 
-        # Make the request
+        # Make the request.  Timestamps are always transferred as millis since unix epoch (see to_web_params).
         opts = self.query.to_web_params()
         n_samples = int(opts["n"])
+        sig_figs = int(opts["v"]) if "v" in opts else 6
         with requests.get(self.url, params=opts, stream=True) as r:
             if r.status_code != requests.codes.ok:
                 _raise_for_bad_response(r)
-            if 'v' in opts:
-                self.data, self.metadata, self.disconnects = _parse_json_iteratively(
-                    r,
-                    num_samples=n_samples,
-                    enums_as_strings=self.query.enums_as_strings,
-                    sig_figs=int(opts["v"]),
-                    unix_timestamps_ms=self.query.unix_timestamps_ms,
-                )
-            else:
-                self.data, self.metadata, self.disconnects = _parse_json_iteratively(
-                    r,
-                    num_samples=n_samples,
-                    enums_as_strings=self.query.enums_as_strings,
-                    sig_figs=6,
-                    unix_timestamps_ms=self.query.unix_timestamps_ms,
-                )
+            data, metadata, disconnects = _parse_json_iteratively(
+                r,
+                num_samples=n_samples,
+                enums_as_strings=self.query.enums_as_strings,
+                sig_figs=sig_figs,
+                unix_timestamps_ms=True,
+            )
+
+        if not self.query.unix_timestamps_ms:
+            _present_as_local_time(data, metadata, disconnects,
+                                   adjusted=self.query.adjust_time_to_server_offset,
+                                   frac_time_digits=self.query.frac_time_digits,
+                                   server_timezone=config.server_timezone)
+        self.data, self.metadata, self.disconnects = data, metadata, disconnects
+
+
+def _ms_to_local_time(ms: np.ndarray, adjusted: bool, server_timezone: str) -> pd.DatetimeIndex:
+    """Convert millis since unix epoch from myquery to naive datetime64[ns] in the server's local time.
+
+    Args:
+        ms: Millis since unix epoch
+        adjusted: Were the millis already shifted to local time by myquery (adjust_time_to_server_offset)?
+        server_timezone: The IANA timezone of the myquery server
+    """
+    idx = pd.to_datetime(np.asarray(ms, dtype="int64"), unit="ms")
+    if not adjusted:
+        idx = idx.tz_localize("UTC").tz_convert(server_timezone).tz_localize(None)
+    return idx.as_unit("ns")
+
+
+def _format_local_time(idx: pd.DatetimeIndex, frac_time_digits: Optional[int]) -> pd.Index:
+    """Format local times the same way myquery formats them when not using unix timestamps."""
+    if frac_time_digits is None:
+        # myquery's default format
+        return pd.Index(idx.strftime("%Y-%m-%dT%H:%M:%S"))
+    return pd.Index(utils.format_index_ns(idx, frac_time_digits))
+
+
+def _present_as_local_time(data: pd.DataFrame, metadata: Dict[str, dict], disconnects: Dict[str, pd.Series],
+                           adjusted: bool, frac_time_digits: Optional[int], server_timezone: str) -> None:
+    """Present millis since unix epoch from myquery as the server's local time.  Modifies its arguments in place.
+
+    The data index becomes datetime64[ns].  Disconnect indexes and enum label dates become strings formatted as
+    myquery formats them when not returning unix timestamps.
+
+    Args:
+        data: The data DataFrame with an index of millis since unix epoch
+        metadata: Channel metadata whose enum label dates are millis since unix epoch
+        disconnects: Disconnect Series with indexes of millis since unix epoch
+        adjusted: Were the millis already shifted to local time by myquery (adjust_time_to_server_offset)?
+        frac_time_digits: The number of fractional second digits to show in formatted strings.  None for myquery's
+                          default format.
+        server_timezone: The IANA timezone of the myquery server
+    """
+    if len(data.columns) > 0:
+        data.index = pd.DatetimeIndex(_ms_to_local_time(data.index.to_numpy(), adjusted, server_timezone),
+                                      name=data.index.name)
+
+    for name, series in disconnects.items():
+        times = _ms_to_local_time(series.index.to_numpy(), adjusted, server_timezone)
+        series.index = _format_local_time(times, frac_time_digits)
+
+    for channel in metadata.values():
+        labels = channel.get("labels", [])
+        if len(labels) > 0:
+            times = _ms_to_local_time([label["d"] for label in labels], adjusted, server_timezone)
+            for label, formatted in zip(labels, _format_local_time(times, frac_time_digits)):
+                label["d"] = formatted
 
 
 def _channel_error_message(errors: Dict[str, str]) -> str:

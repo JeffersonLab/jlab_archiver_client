@@ -6,10 +6,14 @@ from typing import Dict
 
 import numpy as np
 import pandas as pd
+import requests
 from requests import RequestException
 
 from jlab_archiver_client import MySampler
 from jlab_archiver_client import MySamplerQuery
+from jlab_archiver_client.config import config
+# noinspection PyProtectedMember
+from jlab_archiver_client.mysampler import _parse_json_iteratively
 from jlab_archiver_client.utils import json_normalize
 
 
@@ -408,3 +412,92 @@ class TestMySampler(unittest.TestCase):
 
         self.check_mysampler_result(exp_data, exp_disconnects, exp_metadata, res_data, res_disconnects,
                                     res_metadata)
+
+
+class TestMySamplerTimestampTransfer(unittest.TestCase):
+    """MySampler always transfers timestamps as millis since unix epoch.  When presented as datetimes, the results
+    should match what myquery returns when asked for its local time strings directly.
+    """
+
+    @staticmethod
+    def run_local_time_strings(query: MySamplerQuery):
+        """Run the query without unix timestamps, parsing myquery's local time strings as MySampler used to."""
+        opts = query.to_web_params()
+        del opts["u"]
+        url = f"{config.protocol}://{config.myquery_server}{config.mysampler_path}"
+        with requests.get(url, params=opts, stream=True) as r:
+            r.raise_for_status()
+            return _parse_json_iteratively(r, num_samples=query.num_samples, enums_as_strings=query.enums_as_strings,
+                                           sig_figs=int(opts.get("v", 6)), unix_timestamps_ms=False)
+
+    def check_matches_local_time_strings(self, query: MySamplerQuery):
+        exp_data, exp_metadata, exp_disconnects = self.run_local_time_strings(query)
+
+        mysampler = MySampler(query)
+        mysampler.run()
+
+        self.assertEqual("datetime64[ns]", mysampler.data.index.dtype)
+        self.assertTrue(exp_data.equals(mysampler.data), f"\nExpected:\n{exp_data}\nResult:\n{mysampler.data}\n")
+        self.assertDictEqual(json_normalize(exp_disconnects), json_normalize(mysampler.disconnects))
+        self.assertDictEqual(json_normalize(exp_metadata), json_normalize(mysampler.metadata))
+        return mysampler
+
+    def test_frac_time_digits(self):
+        """Disconnect and label timestamps are formatted as myquery would for each frac_time_digits setting."""
+        for frac_time_digits in (None, 0, 3, 9):
+            with self.subTest(frac_time_digits=frac_time_digits):
+                query = MySamplerQuery(start=datetime.strptime("2019-08-12 00:00:00", "%Y-%m-%d %H:%M:%S"),
+                                       interval=1_800_000, num_samples=15, pvlist=["channel1", "channel2"],
+                                       frac_time_digits=frac_time_digits, deployment="docker")
+                mysampler = self.check_matches_local_time_strings(query)
+                self.assertIn("labels", mysampler.metadata["channel2"])
+                self.assertGreater(len(mysampler.disconnects["channel2"]), 0)
+
+    def test_disconnects(self):
+        query = MySamplerQuery(start=datetime.strptime("2018-04-24 12:00:00", "%Y-%m-%d %H:%M:%S"),
+                               interval=600_000, num_samples=10, pvlist=["channel100", "channel101", "channel102"],
+                               deployment="docker")
+        self.check_matches_local_time_strings(query)
+
+    def test_dst_transitions(self):
+        """Local times match myquery across both daylight saving time transitions."""
+        for start in ("2019-03-10 00:00:00", "2019-11-03 00:00:00"):
+            with self.subTest(start=start):
+                query = MySamplerQuery(start=datetime.strptime(start, "%Y-%m-%d %H:%M:%S"),
+                                       interval=900_000, num_samples=16, pvlist=["channel1", "channel100"],
+                                       deployment="docker")
+                self.check_matches_local_time_strings(query)
+
+    def test_fall_back_unix_timestamps_are_unique(self):
+        """Samples in the repeated hour share local times, but their unix timestamps are distinct."""
+        kwargs = dict(start=datetime.strptime("2019-11-03 00:30:00", "%Y-%m-%d %H:%M:%S"), interval=900_000,
+                      num_samples=12, pvlist=["channel1"], deployment="docker")
+
+        local = MySampler(MySamplerQuery(**kwargs))
+        local.run()
+        unix = MySampler(MySamplerQuery(unix_timestamps_ms=True, **kwargs))
+        unix.run()
+
+        self.assertFalse(local.data.index.is_unique)
+        self.assertTrue(unix.data.index.is_unique)
+        self.assertTrue((np.diff(unix.data.index.to_numpy()) == kwargs["interval"]).all())
+        self.assertTrue(local.data.reset_index(drop=True).equals(unix.data.reset_index(drop=True)))
+
+    def test_adjust_time_to_server_offset(self):
+        """myquery always returns unix timestamps when adjusting to the server offset.  These are presented as the
+        same local times as an unadjusted query, and as shifted unix timestamps when requested.
+        """
+        kwargs = dict(start=datetime.strptime("2018-04-24 12:00:00", "%Y-%m-%d %H:%M:%S"), interval=600_000,
+                      num_samples=10, pvlist=["channel100"], deployment="docker")
+
+        unadjusted = MySampler(MySamplerQuery(**kwargs))
+        unadjusted.run()
+        adjusted = MySampler(MySamplerQuery(adjust_time_to_server_offset=True, **kwargs))
+        adjusted.run()
+        adjusted_ms = MySampler(MySamplerQuery(adjust_time_to_server_offset=True, unix_timestamps_ms=True, **kwargs))
+        adjusted_ms.run()
+
+        self.assertTrue(unadjusted.data.equals(adjusted.data))
+        self.assertDictEqual(json_normalize(unadjusted.disconnects), json_normalize(adjusted.disconnects))
+        # 2018-04-24 12:00:00 as if it were UTC
+        self.assertEqual(1524571200000, adjusted_ms.data.index[0])

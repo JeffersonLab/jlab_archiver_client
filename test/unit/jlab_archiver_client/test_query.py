@@ -312,7 +312,8 @@ class TestMySamplerQuery(unittest.TestCase):
         self.assertEqual(params['s'], 1000)
         self.assertNotIn('d', params)
         self.assertNotIn('e', params)
-        self.assertNotIn('u', params)
+        # Timestamps are always transferred as millis since unix epoch
+        self.assertEqual('on', params['u'])
         self.assertNotIn('a', params)
 
     def test_to_web_params_all_boolean_flags(self):

@@ -215,7 +215,10 @@ class MySamplerQuery(Query):
             data_updates_only: Should the response ignore events such as "NETWORK_DISCONNECT" and assume the previous
                                value is still in effect  (Default: False)
             enums_as_strings: Should enum PV values be returned as their names instead of ints
-            unix_timestamps_ms: Should timestamps be returned as millis since unix epoch
+            unix_timestamps_ms: Should timestamps be presented as millis since unix epoch.  If False, timestamps are
+                                presented as datetimes in the myquery server's local time (config.server_timezone).
+                                Timestamps are always transferred from myquery as millis since unix epoch, so this
+                                only controls how they are presented.
             adjust_time_to_server_offset: Should the timestamp be localized to the myquery server
             extra_opts: Extra options to pass to the mysampler endpoint.  Helps to future-proof, produces a warning to
                         avoid accidental use.
@@ -264,8 +267,9 @@ class MySamplerQuery(Query):
             out['d'] = 'on'
         if self.enums_as_strings:
             out['e'] = 'on'
-        if self.unix_timestamps_ms:
-            out['u'] = 'on'
+        # Timestamps are always transferred as millis since unix epoch, which are unambiguous, unlike myquery's local
+        # time strings when clocks fall back.  unix_timestamps_ms only controls how MySampler presents them.
+        out['u'] = 'on'
         if self.adjust_time_to_server_offset:
             out['a'] = 'on'
 

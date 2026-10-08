@@ -67,6 +67,10 @@ class _Config:
     mystats_path: str = "/myquery/mystats"
     """The path to the mystats endpoint"""
 
+    server_timezone: str = "America/New_York"
+    """The IANA timezone of the myquery server.  Used to present timestamps transferred from myquery as millis since
+    unix epoch in the server's local time."""
+
     def set(self, **kwargs) -> None:
         """mutate-in-place API so imports never go stale"""
         with _lock:
@@ -84,6 +88,7 @@ class _Config:
                 "channel_path": self.channel_path,
                 "point_path": self.point_path,
                 "mystats_path": self.point_path,
+                "server_timezone": self.server_timezone,
             }
 
 config = _Config()  # singleton
